@@ -229,13 +229,12 @@ body.ambre .s-bon { --sante: var(--fg); }
 body.ambre .s-moyen { --sante: #ff9d2a; }
 body.ambre .s-mauvais { --sante: #ff6d2a; }
 details.marine { border-left: 4px solid var(--sante); }
-details.marine > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; text-transform: none; letter-spacing: 0; font-size: 15px; }
-.m-id { flex: 1 1 130px; min-width: 0; }
-.m-nom { color: var(--sante); font-weight: 700; overflow-wrap: anywhere; }
-.m-cl { display: block; font-size: 12px; color: var(--fg-dim); }
-.m-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 13px; }
-.m-sb { color: var(--sante); }
-.m-st.h { color: var(--red); font-weight: 700; }
+/* Résumé replié sur une ligne : nom (+ pseudo), état de santé, petit cardiogramme */
+details.marine > summary { display: flex; align-items: center; gap: 4px 10px; text-transform: none; letter-spacing: 0; font-size: 15px; }
+.m-id { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.m-nom { color: var(--sante); font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
+.m-ps { font-size: 13px; color: var(--fg-dim); overflow-wrap: anywhere; min-width: 0; }
+.m-sb { flex: 0 0 auto; color: var(--sante); font-size: 13px; font-weight: 700; }
 .m-lab { display: block; margin: 12px 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-dim); }
 .m-champs { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
 @media (min-width: 520px) { .m-champs { grid-template-columns: 1fr 1fr; } }
@@ -250,10 +249,15 @@ details.marine > summary { display: flex; flex-wrap: wrap; align-items: center; 
 .jauge i.on { background: var(--amber); border-color: var(--amber); }
 .jauge i.on.h { background: var(--red); border-color: var(--red); }
 /* Schéma du corps + cardiogramme */
-.m-corps { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; margin-top: 12px; }
-.m-sil { flex: 0 0 130px; }
+/* Grille : schéma à gauche, cardiogramme à droite ; liste des blessures sous le cardiogramme,
+   ou sur toute la largeur sous le schéma en écran étroit (sinon retour à la ligne à chaque mot). */
+.m-corps { display: grid; grid-template-columns: 130px minmax(0, 1fr); grid-template-areas: "sil droite" "sil bl";
+  grid-template-rows: auto 1fr; gap: 0 12px; align-items: start; margin-top: 12px; }
+.m-sil { grid-area: sil; }
 .m-sil svg { display: block; width: 130px; height: auto; overflow: visible; }
-.m-droite { flex: 1 1 150px; min-width: 0; }
+.m-droite { grid-area: droite; min-width: 0; }
+.m-corps > .m-bl { grid-area: bl; min-width: 0; }
+@media (max-width: 560px) { .m-corps { grid-template-areas: "sil droite" "bl bl"; grid-template-rows: auto auto; row-gap: 8px; } }
 .bp { cursor: pointer; fill: var(--sante); fill-opacity: .25; stroke: var(--sante); stroke-width: 1.5; }
 .bp:hover { fill-opacity: .45; }
 .bp:focus { outline: none; }
@@ -268,6 +272,21 @@ details.marine > summary { display: flex; flex-wrap: wrap; align-items: center; 
 .m-bl button b { flex: 0 0 auto; color: var(--fg-dim); font-weight: 600; }
 .m-bl button span { min-width: 0; overflow-wrap: anywhere; color: var(--fg-dim); }
 .m-bl button.blesse b, .m-bl button.blesse span { color: var(--red); }
+.m-bl button.soigne b { color: var(--fg); }
+.m-bl button span.bl-e { display: block; }
+.m-bl button span.bl-s { color: var(--fg-dim); opacity: .7; text-decoration: line-through; }
+.bp.soigne { fill: url(#m-soigne); fill-opacity: 1; stroke: var(--fg-dim); stroke-width: 2; stroke-dasharray: 4 2; }
+/* Liste des blessures d'une partie (modale) */
+.bl-liste { list-style: none; margin: 8px 0; padding: 0; }
+.bl-it { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--fg-faint); color: var(--red); }
+.bl-it .bl-h { flex: 0 0 auto; font-size: 13px; color: var(--fg-dim); white-space: nowrap; }
+.bl-it .bl-tx { flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }
+.bl-it .bl-ctl { display: flex; gap: 4px; margin-left: auto; }
+.bl-it .bl-ctl .btn { font-size: 13px; padding: 4px 8px; }
+.bl-it .bl-ctl .btn.on { border-color: var(--fg); color: var(--fg); }
+.bl-it.soignee .bl-tx { color: var(--fg-dim); opacity: .7; text-decoration: line-through; }
+.bl-ajout { display: flex; gap: 6px; margin-top: 10px; }
+.bl-ajout input { flex: 1 1 auto; min-width: 0; }
 .ecg {
   position: relative; overflow: hidden; height: 60px; border: 1px solid var(--fg-faint); background-color: var(--bg);
   background-image: linear-gradient(color-mix(in srgb, var(--fg-faint) 30%, transparent) 1px, transparent 1px),
@@ -276,6 +295,7 @@ details.marine > summary { display: flex; flex-wrap: wrap; align-items: center; 
 }
 .ecg::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, var(--bg), transparent 35%); }
 .ecg.mini { flex: 0 0 96px; height: 30px; background-image: none; }
+@media (max-width: 420px) { .ecg.mini { flex-basis: 60px; } }
 details[open] > summary .ecg.mini { display: none; }
 /* Défilement d'un motif de deux périodes identiques : une animation CSS composée par le navigateur
    (pas de boucle JS), une période = 50 % de la largeur du rail. */
@@ -381,7 +401,7 @@ mark { background: var(--amber); color: var(--bg); text-shadow: none; padding: 0
 </nav>
 
 <div id="modale" role="dialog" aria-modal="true"><div class="mb" id="modaleCorps"></div></div>
-<input type="file" id="fichierImport" accept="application/json,.json" hidden>
+<input type="file" id="fichierImport" hidden>
 
 <script>
 "use strict";
@@ -1157,18 +1177,28 @@ function normaliser(o) {
   return s;
 }
 /* Fiche marine validée : textes tronqués, stress entier 0–10, statut / santé pris dans les listes,
-   compteurs d'équipement entiers ≥ 0, blessures seulement pour les 6 parties connues (note vide = pas de blessure). */
+   compteurs d'équipement entiers ≥ 0, blessures seulement pour les 6 parties connues :
+   liste de { id, txt, t (date ISO de l'ajout ou null), soignee } par partie, 30 au plus, texte vide écarté.
+   Ancien format (une note texte par partie) → liste d'une blessure non soignée, date inconnue. */
 function normMarine(m) {
   m = m || {};
   const txt = (v, max) => typeof v === "string" ? v.slice(0, max) : "";
   const st = Number(m.stress);
   const bl = {};
-  if (m.blessures && typeof m.blessures === "object") for (const p of ESC.corps) { const v = txt(m.blessures[p.id], 300).trim(); if (v) bl[p.id] = v; }
+  if (m.blessures && typeof m.blessures === "object") for (const p of ESC.corps) {
+    const v = m.blessures[p.id], ids = new Set();
+    const src = typeof v === "string" ? [{ txt: v }] : Array.isArray(v) ? v : [];
+    const l = src.filter(b => b && typeof b === "object").slice(0, 30).map(b => {
+      let id = txt(b.id, 40); if (!id || ids.has(id)) id = uid(); ids.add(id);
+      return { id, txt: txt(b.txt, 300).trim(), t: typeof b.t === "string" && !isNaN(Date.parse(b.t)) ? b.t : null, soignee: b.soignee === true };
+    }).filter(b => b.txt);
+    if (l.length) bl[p.id] = l;
+  }
   return {
     id: String(m.id || uid()), nom: txt(m.nom, 60), pseudo: txt(m.pseudo, 40), matricule: txt(m.matricule, 30), classe: txt(m.classe, 60),
     stress: Number.isInteger(st) ? Math.min(10, Math.max(0, st)) : 0,
     statut: STATUTS[m.statut] ? m.statut : "aucun",
-    sante: SANTE[m.sante] ? m.sante : "bon",
+    sante: SANTE[m.sante] ? m.sante : "excellent",
     equip: Array.isArray(m.equip) ? m.equip.filter(q => q && typeof q === "object").slice(0, 60)
       .map(q => ({ id: String(q.id || uid()), lib: txt(q.lib, 80), n: Math.min(99999, Math.max(0, Math.floor(Number(q.n)) || 0)) })) : [],
     blessures: bl
@@ -1388,11 +1418,12 @@ function majEscouade() { sauver(); rendreEscouade(); rendreJournal(); }
 function ajouterMarine() {
   const m = normMarine({ id: uid() });
   S.marines.push(m);
-  mOuverts.add(m.id);
+  mOuverts.clear(); mOuverts.add(m.id);  // une seule fiche dépliée : les autres se replient
   journal("marine", "Marine ajouté à l'escouade (fiche " + S.marines.length + ")");
   majEscouade();
+  for (const [mid, x] of mNoeuds) if (mid !== m.id) x.open = false;
   const n = mNoeuds.get(m.id);
-  if (n) { n.scrollIntoView({ block: "start" }); n.querySelector('[data-f="nom"]').focus({ preventScroll: true }); }
+  if (n) { montrerFiche(n); n.querySelector('[data-f="nom"]').focus({ preventScroll: true }); }
 }
 function supprimerMarine(id) {
   const m = marine(id); if (!m) return;
@@ -1430,30 +1461,84 @@ function changerStress(id, d) {
   }
   m.stress = n; majEscouade();
 }
-function saisirBlessure(id, part) {
+/* Blessures : une liste par partie du corps. Une blessure soignée reste listée (barrée) ;
+   seules les blessures non soignées comptent (compteur, marquage rouge du schéma). */
+const BL_MAX = 30;
+function nbActives(l) { return (l || []).filter(b => !b.soignee).length; }
+function libBlessure(m, part) { return nomMarine(m) + " — Blessure " + PARTIE[part].lib.toLowerCase(); }
+/* Liste d'une partie dans une modale qui reste ouverte : seule la liste est reconstruite à chaque action,
+   le champ de saisie n'est jamais remplacé (ni focus ni texte perdus). Suppression en deux appuis
+   (« Confirmer ? » pendant 3 s) plutôt qu'une seconde modale. */
+function ouvrirBlessures(id, part) {
   const m = marine(id), p = PARTIE[part]; if (!m || !p) return;
-  const actuel = m.blessures[part] || "";
-  let val = actuel;  // lu au fil de la frappe : la modale est vidée avant l'exécution du bouton
-  const boutons = [{ lib: "Enregistrer", cls: "pri", act: () => poserBlessure(id, part, val) }];
-  if (actuel) boutons.push({ lib: "Effacer la blessure", cls: "dang", act: () => poserBlessure(id, part, "") });
-  boutons.push({ lib: "Annuler" });
-  modale({ titre: "Blessure — " + p.lib, couleur: "var(--red)", boutons,
-    html: `<p>${esc(nomMarine(m))}. Note vide = pas de blessure.</p>
-      <textarea id="blTxt" rows="3" maxlength="300" placeholder="Ex. : plaie par balle, brûlure acide, fracture…">${esc(actuel)}</textarea>`,
+  modale({ titre: "Blessures — " + p.lib, couleur: "var(--red)", boutons: [{ lib: "Fermer" }],
+    html: `<p>${esc(nomMarine(m))}</p><ul class="bl-liste" id="blListe"></ul>
+      <form class="bl-ajout" id="fBless" autocomplete="off">
+        <input type="text" id="blTxt" maxlength="300" placeholder="Ex. : plaie par balle, brûlure acide…" aria-label="Nouvelle blessure">
+        <button type="submit" class="btn pri">Ajouter</button></form>`,
     apres: c => {
-      const t = c.querySelector("#blTxt");
-      t.addEventListener("input", () => { val = t.value; });
-      t.focus({ preventScroll: true }); t.setSelectionRange(t.value.length, t.value.length);
+      const ul = c.querySelector("#blListe"), t = c.querySelector("#blTxt");
+      const maj = () => {
+        const cle = ul.contains(document.activeElement) ? document.activeElement.dataset.f : null;
+        ul.innerHTML = lignesBlessures(marine(id), part);
+        const x = cle && [...ul.querySelectorAll("[data-f]")].find(el => el.dataset.f === cle);
+        if (x) x.focus({ preventScroll: true }); else if (cle) t.focus({ preventScroll: true });
+      };
+      maj();
+      c.querySelector("#fBless").addEventListener("submit", e => {
+        e.preventDefault();
+        if (ajouterBlessure(id, part, t.value)) { t.value = ""; maj(); }
+        else if (t.value.trim()) t.placeholder = "Limite de " + BL_MAX + " blessures atteinte";
+        t.focus({ preventScroll: true });
+      });
+      ul.addEventListener("click", e => {
+        const b = e.target.closest("button"); if (!b) return;
+        if (b.dataset.blsoin) { soignerBlessure(id, part, b.dataset.blsoin); return maj(); }
+        if (!b.dataset.blsup) return;
+        if (!b.dataset.arme) {
+          b.dataset.arme = "1"; b.textContent = "Confirmer ?";
+          setTimeout(() => { if (b.isConnected) { delete b.dataset.arme; b.textContent = "✕"; } }, 3000);
+          return;
+        }
+        supprimerBlessure(id, part, b.dataset.blsup); maj();
+      });
+      t.focus({ preventScroll: true });
     } });
 }
-function poserBlessure(id, part, txt) {
-  const m = marine(id); if (!m) return;
-  txt = (txt || "").trim().slice(0, 300);
-  const avant = m.blessures[part] || "";
-  if (txt === avant) return;
-  const lib = PARTIE[part].lib;
-  if (!txt) { delete m.blessures[part]; journal("marine", nomMarine(m) + " : blessure effacée (" + lib + ")"); }
-  else { m.blessures[part] = txt; journal("marine", nomMarine(m) + " : blessure " + (avant ? "modifiée " : "") + "— " + lib + " : " + txt); }
+function dateCourte(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso); if (isNaN(d)) return "—";
+  const p = x => String(x).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function lignesBlessures(m, part) {
+  const l = (m && m.blessures[part]) || [];
+  if (!l.length) return `<li class="vide">Aucune blessure notée.</li>`;
+  return l.map(b => { const bid = esc(b.id);
+    return `<li class="bl-it ${b.soignee ? "soignee" : ""}"><span class="bl-h">${dateCourte(b.t)}</span><span class="bl-tx">${esc(b.txt)}</span>
+      <span class="bl-ctl"><button type="button" class="btn pt ${b.soignee ? "on" : ""}" data-f="soin-${bid}" data-blsoin="${bid}" aria-pressed="${b.soignee}">${b.soignee ? "☑" : "☐"} Soignée</button>
+      <button type="button" class="btn dang pt" data-f="sup-${bid}" data-blsup="${bid}" aria-label="Supprimer la blessure">✕</button></span></li>`; }).join("");
+}
+function ajouterBlessure(id, part, texte) {
+  const m = marine(id); if (!m || !PARTIE[part]) return false;
+  texte = (texte || "").trim().slice(0, 300); if (!texte) return false;
+  const l = m.blessures[part] || (m.blessures[part] = []);
+  if (l.length >= BL_MAX) return false;
+  l.push({ id: uid(), txt: texte, t: new Date().toISOString(), soignee: false });
+  journal("marine", libBlessure(m, part) + " : " + texte);
+  majEscouade(); return true;
+}
+function soignerBlessure(id, part, bid) {
+  const m = marine(id), b = m && (m.blessures[part] || []).find(x => x.id === bid); if (!b) return;
+  b.soignee = !b.soignee;
+  journal("marine", libBlessure(m, part) + (b.soignee ? " soignée : " : " de nouveau active : ") + b.txt);
+  majEscouade();
+}
+function supprimerBlessure(id, part, bid) {
+  const m = marine(id), l = m && m.blessures[part], b = l && l.find(x => x.id === bid); if (!b) return;
+  m.blessures[part] = l.filter(x => x !== b);
+  if (!m.blessures[part].length) delete m.blessures[part];
+  journal("marine", libBlessure(m, part) + " supprimée : " + b.txt);
   majEscouade();
 }
 function ajouterEquipement(id) {
@@ -1476,8 +1561,21 @@ function saisirChampMarine(t) {
   m[k] = t.value.slice(0, Number(t.maxLength) > 0 ? t.maxLength : 60);
   sauver();
   const n = mNoeuds.get(m.id); if (!n) return;
-  n.querySelector(".m-nom").textContent = nomMarine(m);
-  n.querySelector(".m-cl").textContent = m.classe || "classe non renseignée";
+  const [nom, ps] = nomsResume(m), e = n.querySelector(".m-ps");
+  n.querySelector(".m-nom").textContent = nom;
+  e.textContent = ps; e.hidden = !ps;
+}
+/* Résumé de la fiche repliée : [libellé principal, pseudo entre guillemets ou ""].
+   Nom + pseudo si les deux existent, sinon le seul renseigné, sinon immatriculation ou « Marine sans nom ». */
+function nomsResume(m) {
+  const nom = m.nom.trim(), ps = m.pseudo.trim();
+  if (nom && ps) return [nom, "« " + ps + " »"];
+  return [nom || ps || m.matricule.trim() || "Marine sans nom", ""];
+}
+/* Fait défiler pour que l'en-tête de la fiche soit visible sous le bandeau fixe (seulement s'il ne l'est pas). */
+function montrerFiche(n) {
+  const haut = $("#bandeau").offsetHeight + 6, y = n.getBoundingClientRect().top;
+  if (y < haut || y > innerHeight - 80) window.scrollBy({ top: y - haut });
 }
 function saisirEquipement(t, fin) {
   const m = marine(t.dataset.mid), q = m && m.equip.find(x => x.id === t.dataset.eq); if (!q) return;
@@ -1493,7 +1591,7 @@ function actionMarine(b) {
   const d = b.dataset, id = d.mid;
   if (d.msante) return changerSante(id, d.msante);
   if (d.mstress) return changerStress(id, Number(d.mstress));
-  if (d.mbless) return saisirBlessure(id, d.mbless);
+  if (d.mbless) return ouvrirBlessures(id, d.mbless);
   if (d.eqd) return compterEquipement(id, d.eq, Number(d.eqd));
   if (d.eqsup) return supprimerEquipement(id, d.eq);
   if (d.eqajout) return ajouterEquipement(id);
@@ -1660,10 +1758,13 @@ const FORMES = {
 };
 function silhouette(m) {
   const a = `data-mid="${esc(m.id)}"`;
-  return `<svg viewBox="0 0 120 210" role="group" aria-label="Schéma du corps — toucher une partie pour noter une blessure">`
+  return `<svg viewBox="0 0 120 210" role="group" aria-label="Schéma du corps — toucher une partie pour voir ses blessures">`
     + ESC.corps.map(p => {
-      const [tag, attr] = FORMES[p.id], b = m.blessures[p.id];
-      return `<${tag} ${attr} class="bp ${b ? "blesse" : ""}" data-part="${p.id}" ${a} data-f="p-${p.id}" tabindex="0" role="button" aria-label="${p.lib}${b ? " : blessure" : ""}"><title>${p.lib}${b ? " — " + esc(b) : ""}</title></${tag}>`;
+      // Rouge hachuré : au moins une blessure non soignée ; hachure pâle : blessures toutes soignées
+      const [tag, attr] = FORMES[p.id], l = m.blessures[p.id] || [], n = nbActives(l);
+      const etat = n ? n + " blessure" + (n > 1 ? "s" : "") : l.length ? "blessures soignées" : "";
+      const tip = l.filter(b => !b.soignee).map(b => esc(b.txt)).join(" ; ");
+      return `<${tag} ${attr} class="bp ${n ? "blesse" : l.length ? "soigne" : ""}" data-part="${p.id}" ${a} data-f="p-${p.id}" tabindex="0" role="button" aria-label="${p.lib}${etat ? " : " + etat : ""}"><title>${p.lib}${tip ? " — " + tip : etat ? " — " + etat : ""}</title></${tag}>`;
     }).join("")
     + `<text class="bp-l" x="3" y="146">D</text><text class="bp-l" x="110" y="146">G</text></svg>`;
 }
@@ -1688,11 +1789,11 @@ function ecgHTML(sid, mini) {
 }
 function carteMarine(m) {
   const s = SANTE[m.sante], st = STATUTS[m.statut], id = esc(m.id), a = `data-mid="${id}"`;
-  const nbBl = Object.keys(m.blessures).length;
+  const [nom, ps] = nomsResume(m);
   let h = `<details class="marine s-${m.sante}" data-marine="${id}">
   <summary data-f="sum">
-    <span class="m-id"><b class="m-nom">${esc(nomMarine(m))}</b><span class="m-cl">${esc(m.classe || "classe non renseignée")}</span></span>
-    <span class="m-meta"><span class="badge m-sb">${esc(s.lib)}</span>${m.statut !== "aucun" ? `<span class="badge ${st.grav > 1 ? "b-val" : "b-statut"}">${esc(st.lib)}</span>` : ""}<span class="m-st ${m.stress >= 7 ? "h" : ""}">Stress ${m.stress}</span>${nbBl ? `<span class="badge b-val">${nbBl} blessure${nbBl > 1 ? "s" : ""}</span>` : ""}</span>
+    <span class="m-id"><b class="m-nom">${esc(nom)}</b><span class="m-ps" ${ps ? "" : "hidden"}>${esc(ps)}</span></span>
+    <span class="m-sb">${esc(s.lib)}</span>
     ${ecgHTML(m.sante, true)}
   </summary><div class="in">
   <div class="m-champs">
@@ -1707,9 +1808,10 @@ function carteMarine(m) {
     <div class="m-sil">${silhouette(m)}</div>
     <div class="m-droite">${ecgHTML(m.sante, false)}
       <div class="m-bpm">♥ ${esc(s.bpm)} BPM${s.rythme ? " — " + esc(s.rythme) : ""}</div>
-      <ul class="m-bl">${ESC.corps.map(p => { const b = m.blessures[p.id];
-        return `<li><button type="button" class="${b ? "blesse" : ""}" data-f="bl-${p.id}" ${a} data-mbless="${p.id}"><b>${p.lib}</b><span>${b ? esc(b) : "—"}</span></button></li>`; }).join("")}</ul>
     </div>
+    <ul class="m-bl">${ESC.corps.map(p => { const l = m.blessures[p.id] || [], n = nbActives(l);
+        return `<li><button type="button" class="${n ? "blesse" : l.length ? "soigne" : ""}" data-f="bl-${p.id}" ${a} data-mbless="${p.id}"><b>${p.lib}</b><span>${l.length
+          ? l.map(b => `<span class="bl-e ${b.soignee ? "bl-s" : ""}">${esc(b.txt)}</span>`).join("") : "—"}</span></button></li>`; }).join("")}</ul>
   </div>
   <label class="m-lab" for="ms-${id}">Statut DOREX</label>
   <select id="ms-${id}" data-f="statut" ${a} data-mstatut="1">${ESC.statuts.map(x => `<option value="${x.id}" ${x.id === m.statut ? "selected" : ""}>${esc(x.lib)}</option>`).join("")}</select>
@@ -1759,7 +1861,7 @@ function remplacerNoeud(ancien, nouveau) {
 function rendreEscouade() {
   const sec = $("#t-escouade");
   if (!$("#mListe")) sec.innerHTML = `<h2>Escouade</h2>
-    <p class="src" style="white-space:normal">Suivi individuel. Toucher une partie du corps (ou sa ligne dans la liste) pour noter une blessure ; note vide = pas de blessure. Santé, statut DOREX, stress et blessures sont écrits au journal.</p>
+    <p class="src" style="white-space:normal">Suivi individuel. Toucher une partie du corps (ou sa ligne dans la liste) pour voir, ajouter ou soigner ses blessures ; une blessure soignée reste listée, barrée. Santé, statut DOREX, stress et blessures sont écrits au journal.</p>
     <div class="btns"><button type="button" class="btn pri plein" data-act="m-ajouter">＋ Ajouter un marine</button></div>
     <p class="vide" id="mVide">Aucun marine dans l'escouade.</p>
     <div id="mListe"></div>
@@ -1767,6 +1869,8 @@ function rendreEscouade() {
     <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
       <pattern id="m-hachure" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="6" height="6" style="fill:rgba(255,75,62,.22)"/><line x1="1.5" y1="0" x2="1.5" y2="6" style="stroke:#ff4b3e;stroke-width:3"/></pattern>
+      <pattern id="m-soigne" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+        <line x1="1" y1="0" x2="1" y2="8" style="stroke:var(--fg-dim);stroke-width:1.5"/></pattern>
     </defs></svg>`;
   const liste = $("#mListe");
   $("#mVide").hidden = S.marines.length > 0;
@@ -1826,10 +1930,10 @@ function rendrePlus() {
     </div>
 
     <h2>Sauvegarde</h2>
-    <p class="src" style="white-space:normal">L'état est enregistré automatiquement dans ce navigateur.</p>
+    <p class="src" style="white-space:normal">L'état est enregistré automatiquement dans ce navigateur. L'export sert de copie de secours ou de transfert vers un autre appareil${surMobile() ? " : il ouvre le menu de partage (Drive, mail, messagerie…)" : ""}.</p>
     <div class="btns">
-      <button class="btn" data-act="export">⇩ Exporter (JSON)</button>
-      <button class="btn" data-act="import">⇧ Importer (JSON)</button>
+      <button class="btn" data-act="export">${surMobile() ? "⇪ Partager la sauvegarde" : "⇩ Exporter"}</button>
+      <button class="btn" data-act="import">⇧ Importer</button>
       <button class="btn dang" data-act="nouvelle">Nouvelle partie</button>
     </div>
     <p class="src" style="white-space:normal">DOREX Ver. 2184-26-6b — aide-mémoire de jeu, sources : .claude/skills du projet.</p>`;
@@ -2045,13 +2149,22 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && d && (d.renom || d.mchamp || d.eqchamp)) e.target.blur();
   if (e.key === "Enter" && e.target.id === "rgQ") e.target.blur();
   // Parties du corps du schéma (éléments SVG focalisables) : Entrée / Espace = clic
-  if ((e.key === "Enter" || e.key === " ") && d && d.part && !fileModale.length) { e.preventDefault(); saisirBlessure(d.mid, d.part); }
+  if ((e.key === "Enter" || e.key === " ") && d && d.part && !fileModale.length) { e.preventDefault(); ouvrirBlessures(d.mid, d.part); }
   if (e.key === "Escape" && fileModale.length) fermerModale();
 });
 document.addEventListener("toggle", e => {
   const d = e.target; if (!d.dataset) return;
   if (d.dataset.grp) (S._ouverts || (S._ouverts = {}))[d.dataset.grp] = d.open;
-  else if (d.dataset.marine) { if (d.open) mOuverts.add(d.dataset.marine); else mOuverts.delete(d.dataset.marine); }
+  else if (d.dataset.marine) {
+    const id = d.dataset.marine;
+    if (!d.open) { mOuverts.delete(id); return; }
+    // Fiche déjà mémorisée ouverte = simple reconstruction du nœud : ni repli des autres ni défilement
+    if (mOuverts.has(id)) return;
+    // Accordéon : ouvrir une fiche replie les autres, puis ramène son en-tête à l'écran
+    mOuverts.clear(); mOuverts.add(id);
+    for (const [mid, x] of mNoeuds) if (mid !== id && x.open) x.open = false;
+    requestAnimationFrame(() => montrerFiche(d));
+  }
 }, true);
 document.addEventListener("input", e => {
   const t = e.target;
@@ -2071,7 +2184,7 @@ document.addEventListener("submit", e => {
 });
 document.addEventListener("click", e => {
   const p = e.target.closest("[data-part]");
-  if (p && !p.closest("#modale")) return saisirBlessure(p.dataset.mid, p.dataset.part);
+  if (p && !p.closest("#modale")) return ouvrirBlessures(p.dataset.mid, p.dataset.part);
   const b = e.target.closest("button"); if (!b || b.closest("#modale") || b.closest("#onglets")) return;
   if (b.dataset.mid) return actionMarine(b);
   if (b.dataset.jf) { filtreJournal = b.dataset.jf; return rendreJournal(); }
@@ -2107,14 +2220,31 @@ document.addEventListener("click", e => {
   }
 });
 
-function exporter() {
+/* Téléphone : l'export passe par le menu de partage du système (Drive, mail…) plutôt que par un
+   téléchargement difficile à retrouver. Chrome refuse de partager un .json : le fichier partagé est en .txt,
+   l'import accepte les deux (seul le contenu est vérifié). */
+function surMobile() {
+  return navigator.userAgentData ? navigator.userAgentData.mobile : /Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+async function exporter() {
   const copie = Object.assign({}, S); delete copie._ouverts;
   const d = new Date(), p = x => String(x).padStart(2, "0");
-  const nom = `dorex-partie-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
-  const url = URL.createObjectURL(new Blob([JSON.stringify(copie, null, 2)], { type: "application/json" }));
-  const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-  journal("systeme", "Export : " + nom); sauver(); rendreJournal();
+  const base = `dorex-partie-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+  const texte = JSON.stringify(copie, null, 2);
+  let nom = base + ".txt";
+  const fichier = new File([texte], nom, { type: "text/plain" });
+  let partage = false;
+  if (surMobile() && navigator.canShare && navigator.canShare({ files: [fichier] })) {
+    try { await navigator.share({ files: [fichier], title: "Sauvegarde DOREX" }); partage = true; }
+    catch (e) { if (e.name === "AbortError") return; /* autre échec : téléchargement classique */ }
+  }
+  if (!partage) {
+    nom = base + ".json";
+    const url = URL.createObjectURL(new Blob([texte], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  journal("systeme", (partage ? "Partage : " : "Export : ") + nom); sauver(); rendreJournal();
 }
 $("#fichierImport").addEventListener("change", e => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
