@@ -1,0 +1,17 @@
+{
+  "name": "DOREX — Terminal du chef d'équipe",
+  "short_name": "DOREX",
+  "description": "Aide-mémoire du chef d'équipe sous doctrine DOREX (JDR Alien)",
+  "lang": "fr",
+  "start_url": "dorex.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050805",
+  "theme_color": "#050805",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

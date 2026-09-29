@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050805">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="Aide-mémoire du chef d'équipe sous doctrine DOREX (JDR Alien)">
+<title>DOREX — Terminal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23050805'/%3E%3Crect x='5' y='5' width='54' height='54' fill='none' stroke='%2339ff88' stroke-width='4'/%3E%3Cpath d='M18 16h14c9 0 14 6 14 16s-5 16-14 16H18z' fill='none' stroke='%2339ff88' stroke-width='5'/%3E%3C/svg%3E">
+<style>
+/* ===================== THÈME ===================== */
+:root {
+  --bg: #040704;
+  --bg2: #0a120b;
+  --bg3: #102014;
+  --fg: #39ff88;        /* texte principal (phosphore vert) */
+  --fg-dim: #22b561;    /* texte secondaire */
+  --fg-faint: #16713d;  /* bordures */
+  --amber: #ffb000;
+  --orange: #ff8a1f;
+  --red: #ff4b3e;
+  --alert: var(--fg);   /* couleur d'alerte du niveau actif (réglée par JS) */
+  --glow: 0 0 6px rgba(57,255,136,.35);
+  --font: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "Roboto Mono", "Droid Sans Mono", "DejaVu Sans Mono", "Liberation Mono", monospace;
+}
+body.ambre {
+  --fg: #ffc04a;
+  --fg-dim: #d59a2c;
+  --fg-faint: #7a5716;
+  --bg2: #120e05;
+  --bg3: #211808;
+  --glow: 0 0 6px rgba(255,176,0,.35);
+}
+body[data-niv="0"], body[data-niv="1"] { --alert: var(--fg); }
+body[data-niv="2"] { --alert: var(--amber); }
+body[data-niv="3"] { --alert: var(--orange); }
+body[data-niv="4"], body[data-niv="5"] { --alert: var(--red); }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 16px; line-height: 1.45;
+  text-shadow: var(--glow);
+  min-height: 100vh; overflow-x: hidden;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+body.scan::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.22) 3px, rgba(0,0,0,0) 4px);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--fg); }
+small, .src { font-size: 12px; color: var(--fg-dim); }
+.src { opacity: .9; overflow-wrap: anywhere; }
+span.src { white-space: nowrap; }
+@media (max-width: 360px) { span.src { white-space: normal; } }
+h2 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 22px 0 8px; color: var(--fg); border-bottom: 1px solid var(--fg-faint); padding-bottom: 4px; }
+h3 { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; margin: 16px 0 6px; color: var(--fg-dim); }
+p { margin: 6px 0; }
+ul.plain { list-style: none; margin: 0; padding: 0; }
+ul.plain li { padding: 5px 0 5px 18px; position: relative; }
+ul.plain li::before { content: "›"; position: absolute; left: 2px; color: var(--fg-dim); }
+ul.interdits li::before { content: "✕"; color: var(--red); left: 0; }
+ul.interdits li { padding-left: 20px; }
+
+/* ===================== EN-TÊTE ===================== */
+header#bandeau {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--bg); border-bottom: 2px solid var(--alert);
+  padding: calc(8px + env(safe-area-inset-top)) 14px 8px;
+}
+.b-top { display: flex; align-items: center; gap: 12px; }
+.b-num {
+  flex: 0 0 auto; min-width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--alert); color: var(--alert); font-size: 34px; font-weight: 700;
+  text-shadow: 0 0 10px var(--alert);
+}
+body[data-niv="5"] .b-num { animation: clign 1.2s steps(2) infinite; }
+@keyframes clign { 50% { background: var(--red); color: var(--bg); } }
+@media (prefers-reduced-motion: reduce) { body[data-niv="5"] .b-num { animation: none; background: var(--red); color: var(--bg); } }
+.b-txt { min-width: 0; }
+.b-lab { font-size: 11px; letter-spacing: .2em; color: var(--fg-dim); }
+.b-nom { font-size: 18px; font-weight: 700; color: var(--alert); text-transform: uppercase; line-height: 1.2; }
+.b-sub { font-size: 13px; color: var(--fg); margin-top: 2px; }
+.b-sub b { color: var(--alert); font-weight: 600; }
+#avert {
+  display: none; margin-top: 8px; padding: 8px 10px; border: 2px solid var(--red); color: var(--red);
+  background: rgba(255,75,62,.08); font-weight: 700; font-size: 14px; cursor: pointer;
+}
+#avert.on { display: block; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { background: rgba(255,75,62,.22); } }
+@media (prefers-reduced-motion: reduce) { #avert.on { animation: none; } }
+
+/* ===================== ONGLETS ===================== */
+nav#onglets {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  background: var(--bg); border-top: 2px solid var(--fg-faint);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav#onglets button {
+  position: relative; min-width: 0; background: none; border: 0; min-height: 64px; padding: 6px 1px; cursor: pointer;
+  color: var(--fg-dim); font-size: 11px; letter-spacing: .03em; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border-top: 3px solid transparent;
+}
+nav#onglets button .ic { font-size: 20px; line-height: 1; }
+nav#onglets button[aria-selected="true"] { color: var(--fg); border-top-color: var(--fg); background: var(--bg2); }
+nav#onglets .pastille { position: absolute; top: 5px; left: calc(50% + 9px); color: var(--bg); background: var(--alert); border-radius: 8px; padding: 0 5px; font-size: 11px; line-height: 16px; text-shadow: none; }
+/* 7 onglets sur téléphone (~360 px) : libellés resserrés pour que « Escouade » tienne */
+@media (max-width: 420px) {
+  nav#onglets button { font-size: 10px; letter-spacing: 0; }
+  nav#onglets .pastille { left: auto; right: 1px; padding: 0 4px; }  /* reste dans l'onglet même à 2 chiffres */
+}
+
+main { max-width: 860px; margin: 0 auto; padding: 4px 14px 24px; }
+section.tab { display: none; }
+section.tab.on { display: block; }
+
+/* ===================== BLOCS ===================== */
+.carte { border: 1px solid var(--fg-faint); background: var(--bg2); padding: 10px 12px; margin: 10px 0; }
+.carte.alert { border-color: var(--alert); }
+.directive { font-size: 17px; font-weight: 700; color: var(--alert); }
+.ligne { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.badge {
+  display: inline-block; border: 1px solid currentColor; padding: 0 6px; font-size: 12px; font-weight: 700;
+  letter-spacing: .05em; white-space: nowrap; text-shadow: none;
+}
+.b-n0, .b-n1 { color: var(--fg); }
+.b-n2 { color: var(--amber); }
+.b-n3 { color: var(--orange); }
+.b-n4, .b-n5 { color: var(--red); }
+.b-rel { color: var(--amber); }
+.b-statut { color: var(--amber); }
+.b-val { color: var(--red); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 8px 14px; cursor: pointer;
+  background: var(--bg2); border: 2px solid var(--fg-dim); color: var(--fg);
+  text-transform: uppercase; letter-spacing: .06em; font-size: 14px; text-shadow: var(--glow);
+}
+.btn:active { background: var(--bg3); }
+.btn.pri { border-color: var(--alert); color: var(--alert); }
+.btn.dang { border-color: var(--red); color: var(--red); }
+.btn.plein { width: 100%; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.btns .btn { flex: 1 1 140px; }
+
+/* Cases à cocher tactiles */
+.chk {
+  display: flex; align-items: flex-start; gap: 12px; padding: 10px 8px; min-height: 52px;
+  border-bottom: 1px solid var(--fg-faint); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.chk:last-child { border-bottom: 0; }
+.chk input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chk .box {
+  flex: 0 0 auto; width: 28px; height: 28px; border: 2px solid var(--fg-dim); margin-top: 1px;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px;
+}
+.chk input:checked + .box { border-color: var(--alert); background: var(--alert); color: var(--bg); text-shadow: none; }
+.chk input:checked + .box::after { content: "✓"; }
+.chk input:focus-visible + .box { outline: 2px dashed var(--fg); outline-offset: 2px; }
+.chk .corps { flex: 1 1 auto; min-width: 0; }
+.chk.fait .lib { color: var(--fg-dim); text-decoration: line-through; text-decoration-color: var(--fg-faint); }
+.chk .eff { font-size: 13px; color: var(--fg-dim); margin-top: 3px; }
+.ev.actif { background: var(--bg3); }
+.ev.actif .eff { color: var(--amber); }
+.ev .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+
+details { border: 1px solid var(--fg-faint); background: var(--bg2); margin: 10px 0; }
+details > summary { cursor: pointer; padding: 12px; min-height: 48px; list-style: none; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "+ "; color: var(--fg-dim); }
+details[open] > summary::before { content: "− "; }
+details > .in { padding: 0 12px 12px; }
+details.grp > summary { font-weight: 700; }
+details.grp > .in { padding: 0 4px 4px; }
+
+.resume { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.resume > div { border: 1px solid var(--fg-faint); padding: 8px; background: var(--bg2); text-align: center; }
+.resume .big { font-size: 28px; font-weight: 700; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border: 1px solid var(--fg-faint); padding: 6px; text-align: left; vertical-align: top; }
+th { color: var(--fg-dim); font-weight: 600; }
+.tab-scroll { overflow-x: auto; }
+
+/* Zones */
+.zone { border: 1px solid var(--fg-faint); background: var(--bg2); padding: 10px; margin: 10px 0; }
+.zone .zt { display: flex; gap: 8px; align-items: center; }
+.zone .zt input { flex: 1 1 auto; min-width: 0; }
+.seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 10px; }
+.seg button { min-height: 48px; background: var(--bg); border: 2px solid var(--fg-faint); color: var(--fg-dim); cursor: pointer; font-weight: 700; }
+.seg button.on { background: var(--zc, var(--fg)); color: var(--bg); border-color: var(--zc, var(--fg)); text-shadow: none; }
+.zc0 { --zc: var(--fg); } .zc1 { --zc: var(--amber); } .zc2 { --zc: var(--orange); } .zc3, .zc4 { --zc: var(--red); }
+.zinfo { font-size: 13px; color: var(--fg-dim); margin-top: 8px; }
+input[type=text], input[type=number], textarea, select {
+  background: var(--bg); border: 2px solid var(--fg-faint); padding: 10px; min-height: 48px; width: 100%; color: var(--fg);
+  border-radius: 0;
+}
+input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus { outline: none; border-color: var(--fg); }
+.ico { min-width: 48px; padding: 8px; }
+
+/* Journal */
+.jl { border-bottom: 1px solid var(--fg-faint); padding: 8px 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+.jl .h { color: var(--fg-dim); font-size: 13px; white-space: nowrap; }
+.jl .ty { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-dim); }
+.jl.niv .tx { color: var(--alert); font-weight: 700; }
+.jl.refus .tx { color: var(--red); font-weight: 700; }
+.jl .tx { grid-column: 1 / -1; word-wrap: break-word; }
+.jl .ent { display: flex; gap: 10px; align-items: baseline; }
+.seg.s4 { grid-template-columns: repeat(4, 1fr); }
+.seg.s4 button { font-size: 13px; min-width: 0; padding: 4px 2px; }
+
+/* Escouade — couleur de l'état de santé (--sante), par thème */
+.s-excellent { --sante: var(--fg); }
+.s-bon { --sante: #a6e85a; }
+.s-moyen { --sante: var(--amber); }
+.s-mauvais { --sante: var(--orange); }
+.s-critique { --sante: var(--red); }
+.s-decede { --sante: #7c7c7c; }
+body.ambre .s-excellent { --sante: #fff0c4; }
+body.ambre .s-bon { --sante: var(--fg); }
+body.ambre .s-moyen { --sante: #ff9d2a; }
+body.ambre .s-mauvais { --sante: #ff6d2a; }
+details.marine { border-left: 4px solid var(--sante); }
+details.marine > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; text-transform: none; letter-spacing: 0; font-size: 15px; }
+.m-id { flex: 1 1 130px; min-width: 0; }
+.m-nom { color: var(--sante); font-weight: 700; overflow-wrap: anywhere; }
+.m-cl { display: block; font-size: 12px; color: var(--fg-dim); }
+.m-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 13px; }
+.m-sb { color: var(--sante); }
+.m-st.h { color: var(--red); font-weight: 700; }
+.m-lab { display: block; margin: 12px 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-dim); }
+.m-champs { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
+@media (min-width: 520px) { .m-champs { grid-template-columns: 1fr 1fr; } }
+.seg.s3 { grid-template-columns: repeat(3, 1fr); }
+.seg.sante { margin-top: 0; }
+.seg.sante button { --zc: var(--sante); color: var(--sante); font-size: 14px; min-width: 0; padding: 4px 2px; }
+.seg.sante button.on { color: var(--bg); }
+.m-stress { display: flex; align-items: center; gap: 8px; }
+.m-stress .val { min-width: 2.2em; text-align: center; font-size: 22px; font-weight: 700; }
+.jauge { display: flex; gap: 2px; flex: 1 1 auto; min-width: 60px; }
+.jauge i { flex: 1 1 0; height: 14px; border: 1px solid var(--fg-faint); }
+.jauge i.on { background: var(--amber); border-color: var(--amber); }
+.jauge i.on.h { background: var(--red); border-color: var(--red); }
+/* Schéma du corps + cardiogramme */
+.m-corps { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; margin-top: 12px; }
+.m-sil { flex: 0 0 130px; }
+.m-sil svg { display: block; width: 130px; height: auto; overflow: visible; }
+.m-droite { flex: 1 1 150px; min-width: 0; }
+.bp { cursor: pointer; fill: var(--sante); fill-opacity: .25; stroke: var(--sante); stroke-width: 1.5; }
+.bp:hover { fill-opacity: .45; }
+.bp:focus { outline: none; }
+.bp:focus-visible { stroke: var(--fg); stroke-width: 3; }
+.bp.blesse { fill: url(#m-hachure); fill-opacity: 1; stroke: var(--red); stroke-width: 3; }
+.s-decede .bp { stroke-dasharray: 3 2; }
+.bp-l { fill: var(--fg-dim); font-size: 10px; pointer-events: none; text-shadow: none; }
+.m-bpm { font-weight: 700; color: var(--sante); margin: 4px 0 6px; }
+.m-bl { list-style: none; margin: 0; padding: 0; }
+.m-bl button { display: flex; gap: 8px; width: 100%; min-height: 44px; padding: 6px 4px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-bottom: 1px solid var(--fg-faint); font-size: 14px; }
+.m-bl button b { flex: 0 0 auto; color: var(--fg-dim); font-weight: 600; }
+.m-bl button span { min-width: 0; overflow-wrap: anywhere; color: var(--fg-dim); }
+.m-bl button.blesse b, .m-bl button.blesse span { color: var(--red); }
+.ecg {
+  position: relative; overflow: hidden; height: 60px; border: 1px solid var(--fg-faint); background-color: var(--bg);
+  background-image: linear-gradient(color-mix(in srgb, var(--fg-faint) 30%, transparent) 1px, transparent 1px),
+                    linear-gradient(90deg, color-mix(in srgb, var(--fg-faint) 30%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.ecg::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, var(--bg), transparent 35%); }
+.ecg.mini { flex: 0 0 96px; height: 30px; background-image: none; }
+details[open] > summary .ecg.mini { display: none; }
+/* Défilement d'un motif de deux périodes identiques : une animation CSS composée par le navigateur
+   (pas de boucle JS), une période = 50 % de la largeur du rail. */
+.ecg-rail { width: 200%; height: 100%; animation: ecg linear infinite; will-change: transform; }
+.ecg svg { display: block; width: 100%; height: 100%; }
+.ecg path { fill: none; stroke: var(--sante); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ecg.mini path { stroke-width: 1.5; }
+@keyframes ecg { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ecg-rail { animation: none; } }
+.ecg-mort { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--red); font-weight: 700; letter-spacing: .25em; text-shadow: 0 0 6px var(--bg), 0 0 3px var(--bg); }
+.ecg.mini .ecg-mort { font-size: 10px; letter-spacing: .1em; }
+/* Équipement */
+.m-eq { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--fg-faint); }
+.m-eq input[type=text] { flex: 1 1 160px; min-width: 0; }
+.m-eq .ctl { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+.m-eq input[type=number] { width: 76px; text-align: center; padding: 8px 4px; }
+.btn.pt { min-width: 44px; min-height: 44px; padding: 4px; }
+
+/* Modale */
+#modale { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(0,0,0,.82); padding: 14px; overflow-y: auto; }
+#modale.on { display: flex; align-items: flex-start; justify-content: center; }
+#modale .mb { width: 100%; max-width: 560px; margin-top: 6vh; background: var(--bg); border: 2px solid var(--mc, var(--alert)); padding: 14px; box-shadow: 0 0 24px rgba(0,0,0,.8); }
+#modale h2 { margin-top: 0; color: var(--mc, var(--alert)); border-color: var(--mc, var(--alert)); }
+.annonce { border-left: 3px solid var(--alert); padding: 6px 10px; margin: 10px 0; font-style: italic; }
+.choix-niv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.choix-niv button { min-height: 56px; background: var(--bg2); border: 2px solid var(--fg-faint); cursor: pointer; }
+.choix-niv button b { display: block; font-size: 22px; }
+
+/* Onglet Règles */
+.rg-q { display: flex; gap: 8px; }
+.rg-q input { flex: 1 1 auto; min-width: 0; }
+.rg-note { font-size: 13px; color: var(--fg-dim); }
+details.rg > summary { font-weight: 700; }
+details.sub { background: var(--bg); margin: 8px 0; }
+details.sub > summary { font-size: 13px; padding: 10px; }
+details summary .src { text-transform: none; letter-spacing: 0; font-weight: 400; }
+#t-regles span.src { white-space: normal; }
+#t-regles h3 { margin-top: 18px; }
+h4 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; margin: 14px 0 4px; color: var(--fg-dim); }
+ol.num { margin: 0; padding-left: 26px; }
+ol.num li { padding: 4px 0; }
+ol.num li::marker { color: var(--fg-dim); }
+ul.coches li::before { content: "☐"; left: 0; }
+ul.coches li { padding-left: 22px; }
+ul.mx li { border-bottom: 1px solid var(--fg-faint); padding-bottom: 8px; }
+ul.mx .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+ul.mx .eff { font-size: 13px; color: var(--fg-dim); margin-top: 3px; }
+.rc { border: 1px solid var(--fg-faint); background: var(--bg); padding: 8px 10px; margin: 8px 0; }
+details.sub .rc { background: var(--bg2); }
+.rc-t { font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.rc p { margin: 4px 0; font-size: 14px; }
+.rg-dir { font-weight: 700; color: var(--fg); }
+table.recap td:first-child { min-width: 7em; }
+body[data-niv="0"] tr[data-rn="0"], body[data-niv="1"] tr[data-rn="1"], body[data-niv="2"] tr[data-rn="2"],
+body[data-niv="3"] tr[data-rn="3"], body[data-niv="4"] tr[data-rn="4"], body[data-niv="5"] tr[data-rn="5"] { background: var(--bg3); }
+mark { background: var(--amber); color: var(--bg); text-shadow: none; padding: 0 1px; }
+@media (max-width: 420px) { table.recap { font-size: 12px; } table.recap td, table.recap th { padding: 5px 4px; } }
+
+.vide { color: var(--fg-dim); font-style: italic; padding: 8px 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (min-width: 760px) {
+  body { font-size: 17px; }
+  .b-nom { font-size: 22px; }
+  .b-top, #avert.on { max-width: 832px; margin-left: auto; margin-right: auto; }
+  .deux-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  nav#onglets { max-width: 860px; margin: 0 auto; border-left: 2px solid var(--fg-faint); border-right: 2px solid var(--fg-faint); }
+}
+</style>
+</head>
+<body class="scan" data-niv="0">
+
+<header id="bandeau">
+  <div class="b-top">
+    <div class="b-num" id="bNum">0</div>
+    <div class="b-txt">
+      <div class="b-lab">DOREX // NIVEAU ACTIF</div>
+      <div class="b-nom" id="bNom">—</div>
+      <div class="b-sub" id="bSub"></div>
+    </div>
+  </div>
+  <div id="avert" role="alert"></div>
+</header>
+
+<main>
+  <section class="tab on" id="t-niveau" aria-label="Niveau"></section>
+  <section class="tab" id="t-events" aria-label="Événements"></section>
+  <section class="tab" id="t-zones" aria-label="Zones"></section>
+  <section class="tab" id="t-escouade" aria-label="Escouade"></section>
+  <section class="tab" id="t-journal" aria-label="Journal"></section>
+  <section class="tab" id="t-regles" aria-label="Règles"></section>
+  <section class="tab" id="t-plus" aria-label="Réglages et sauvegarde"></section>
+</main>
+
+<nav id="onglets" role="tablist">
+  <button role="tab" data-tab="niveau" aria-selected="true"><span class="ic">▣</span>Niveau</button>
+  <button role="tab" data-tab="events" aria-selected="false"><span class="ic">⚠</span>Évén.<span class="pastille" id="nbEv" hidden></span></button>
+  <button role="tab" data-tab="zones" aria-selected="false"><span class="ic">▦</span>Zones</button>
+  <button role="tab" data-tab="escouade" aria-selected="false"><span class="ic">☻</span>Escouade</button>
+  <button role="tab" data-tab="journal" aria-selected="false"><span class="ic">≡</span>Journal</button>
+  <button role="tab" data-tab="regles" aria-selected="false"><span class="ic">§</span>Règles</button>
+  <button role="tab" data-tab="plus" aria-selected="false"><span class="ic">⋯</span>Plus</button>
+</nav>
+
+<div id="modale" role="dialog" aria-modal="true"><div class="mb" id="modaleCorps"></div></div>
+<input type="file" id="fichierImport" accept="application/json,.json" hidden>
+
+<script>
+"use strict";
+/* =====================================================================
+   DONNÉES DOREX — à corriger ici si besoin.
+   Source : .claude/skills (dorex-niveaux, dorex-escalade,
+   dorex-zones-confinement, dorex-roe, dorex-procedures, dorex-doctrine).
+   Chaque texte porte sa référence de paragraphe (champ src).
+   ===================================================================== */
+const DOREX_DATA = {
+  /* Formule d'annonce radio unique (✔ règle de table) — {X} = escouade, {Y} = niveau */
+  annonce: { texte: "Escouade {X}, annonce DOREX prioritaire : passage en niveau {Y}", src: "✔ règle de table — EOD §3.2, DOREX §4.2" },
+
+  niveaux: [
+    { n: 0, nom: "Observation",
+      situation: "Phénomène biologique, organique ou exobiologique détecté sans aucun contact, direct ou indirect.", srcSit: "EOD ch. 1",
+      directive: "Observer. Identifier. Rendre compte. Toute interaction qui modifie le comportement de l'anomalie est un échec de procédure.", srcDir: "EOD ch. 1",
+      roe: { n: 0, nom: "Non-engagement", fin: "Observer", detail: "Aucune force. Autorisé : acquisition de données, camouflage, silence, observation à distance. Interdit : armement actif, visée, stimulation volontaire, intervention physique.", src: "ROED §1.0" },
+      zone: "C0 — zone saine (aucun contact, on n'entre pas)",
+      mesures: { src: "EOD §1.2", items: [
+        "Arrêt de toute progression",
+        "Maintien de la position ou repli vers un couvert sécurisé",
+        "Activation des capteurs longue portée",
+        "Acquisition thermique, spectrale et biologique",
+        "Enregistrement vidéo et télémétrique continu",
+        "Transmission des données au poste de commandement" ] },
+      notes: [
+        ["Capteurs ou optiques longue portée exclusivement. Drone uniquement sur ordre du commandement ou en cas de perte de visibilité.", "EOD §1.3 ✔ règle de table"],
+        ["Aucune conclusion avant confirmation par plusieurs sources.", "EOD §1.3"],
+        ["Équipe groupée, contact visuel permanent ; radio limitée aux messages opérationnels ; discrétion sonore et lumineuse.", "EOD §1.6"] ],
+      interdits: { src: "EOD §1.5", items: [
+        "Pénétrer dans la zone d'observation ; réduire volontairement la distance",
+        "Toucher ou déplacer un objet suspect ; prélever ; ouvrir une structure inconnue",
+        "Éclairage intense, laser, dispositif sonore pouvant provoquer une réaction",
+        "Modifier l'environnement immédiat",
+        "Toute initiative individuelle" ] },
+      escalade: { vers: 1, src: "EOD §1.7", items: [
+        ["Confirmation visuelle d'une entité", "EOD §1.7"],
+        ["Confirmation d'une structure biologique inconnue", "EOD §1.7"],
+        ["Mouvement autonome observé", "EOD §1.7"],
+        ["Réaction à la présence humaine ou à un stimulus", "EOD §1.7"],
+        ["Plusieurs anomalies simultanées", "EOD §1.7"],
+        ["Test des 5 questions : 2 « oui » ou plus → niveau 2 direct", "DOREX §3.4"],
+        ["Doute → niveau supérieur", "EOD §1.7"] ] } },
+
+    { n: 1, nom: "Contact visuel confirmé",
+      situation: "Entité, structure ou phénomène d'origine inconnue confirmé visuellement. Aucun contact. Menace non caractérisée.", srcSit: "EOD ch. 2",
+      directive: "Localiser. Observer. Évaluer. Rendre compte. La curiosité individuelle est un facteur de risque.", srcDir: "EOD ch. 2",
+      roe: { n: 1, nom: "Dissuasion passive", fin: "Dissuader", detail: "Armement sécurisé mais opérationnel ; posture défensive sans verrouillage de tir ; aucune provocation ; drones armés interdits sauf ordre direct.", src: "ROED §2.0" },
+      zone: "C0 → C1 (si accès restreint)",
+      mesures: { src: "EOD §2.2", items: [
+        "Interruption immédiate de la progression",
+        "Établissement d'un périmètre de sécurité",
+        "Désignation d'un poste d'observation",
+        "Déploiement d'un drone de reconnaissance",
+        "Cartographie complète de la zone",
+        "Enregistrement continu de tous les capteurs",
+        "Transmission immédiate au commandement" ] },
+      notes: [
+        ["Distance de sécurité maintenue tant que la menace n'est pas déterminée.", "EOD §2.2"],
+        ["Reconnaissance sans exposition du personnel : moyens téléopérés prioritaires.", "EOD §2.3"],
+        ["Entité exploratoire : augmenter la distance, surveillance drone, réduire émissions lumineuses et sonores. Changement brutal de comportement → réévaluation immédiate.", "EOD §2.6"],
+        ["Perte de contact avec une équipe (< 20 min) : aucune équipe n'entre, dernier signal, drone immédiat. Aucune récupération autorisée.", "EOD §2.7"] ],
+      interdits: { src: "EOD §2.5", items: [
+        "Franchir le périmètre ; contact physique ; prélèvement",
+        "Ouvrir une structure biologique ; déplacer un objet inconnu",
+        "Explosifs ou armes lourdes",
+        "Éclairage agressif",
+        "Agir sans validation du commandement" ] },
+      escalade: { vers: 2, src: "EOD §2.8", items: [
+        ["Pénétration involontaire dans la zone d'observation", "EOD §2.8"],
+        ["Exposition atmosphérique potentielle", "EOD §2.8"],
+        ["Contact avec un fluide ou un matériau biologique", "EOD §2.8"],
+        ["Ouverture d'une structure inconnue", "EOD §2.8"],
+        ["Disparition d'un membre d'équipe dans la zone", "EOD §2.8"],
+        ["Comportement territorial d'une entité (niveau 2 minimum)", "✔ règle de table — DOREX §8.2"],
+        ["Blessure en environnement EXO → niveau 3 direct", "✔ règle de table — DOREX §4.3"],
+        ["Le doute suffit", "EOD §2.8"] ] } },
+
+    { n: 2, nom: "Contact indirect possible",
+      situation: "Une exposition indirecte ne peut plus être exclue. Pas de contamination confirmée, mais les conditions d'exposition sont réunies.", srcSit: "EOD ch. 3",
+      directive: "Isoler. Identifier. Contrôler. Préserver. Aucun objectif ne justifie une exposition supplémentaire.", srcDir: "EOD ch. 3",
+      roe: { n: 2, nom: "Sécurisation du contact", fin: "Se défendre", detail: "Tir uniquement en cas de menace directe confirmée ; aucune poursuite ; engagement limité à la protection de l'unité ; suppression de toute menace à portée. Interdit : frappe préventive, engagement hors champ validé, poursuite hors zone.", src: "ROED §3.0" },
+      zone: "C1 — Préventif",
+      mesures: { src: "EOD §3.2", items: [
+        "Arrêt de toutes les opérations",
+        "Annonce radio : « {ANNONCE} »",
+        "Balisage et isolement de la zone concernée",
+        "Identification des personnels exposés",
+        "Maintien des positions jusqu'aux ordres",
+        "Déploiement des équipes médicales ou NBC" ] },
+      notes: [
+        ["NBC complet obligatoire pour toute intervention ; contrôle d'étanchéité avant engagement ; équipement défectueux retiré immédiatement.", "EOD §3.3"],
+        ["Exposés (statut EXPOSÉ / Sujet EXO) : retrait des armes, isolement physique, surveillance biométrique permanente, vidéo continue, aucun contact non protégé.", "EOD §3.4"],
+        ["Recherche et récupération = opération NBC : 3 minimum, radio permanente, drone en tête, couverture mutuelle.", "EOD §3.6"],
+        ["En cas d'incertitude, l'exposition est considérée comme avérée jusqu'à vérification.", "EOD §3.1"] ],
+      interdits: { src: "EOD §3.5", items: [
+        "Manipuler une structure biologique",
+        "Transporter un échantillon sans confinement",
+        "Retirer un équipement de protection",
+        "Entrer seul en zone suspecte",
+        "Quitter le secteur sans autorisation",
+        "Réintégrer une zone saine sans décontamination",
+        "Toute manipulation scientifique est suspendue" ] },
+      escalade: { vers: 3, src: "EOD §3.8", items: [
+        ["Contamination présumée d'un membre d'équipage", "EOD §3.8"],
+        ["Symptômes compatibles", "EOD §3.8"],
+        ["Rupture du confinement local", "EOD §3.8"],
+        ["Disparition d'un opérateur en zone EXO", "EOD §3.8"],
+        ["Propagation supposée d'un agent biologique", "EOD §3.8"],
+        ["Perte de contrôle d'un sujet exposé", "EOD §3.8"],
+        ["Comportement prédatoire (niveau 3 minimum)", "✔ règle de table — DOREX §8.2"],
+        ["Niveau 2 non résolu → niveau 3 après validation du commandement", "EOD §4.1"] ] } },
+
+    { n: 3, nom: "Exposition suspectée",
+      situation: "Contamination probable, ou perte possible de maîtrise sanitaire. Toute incertitude = contamination active en phase initiale.", srcSit: "EOD ch. 4",
+      directive: "Isoler. Verrouiller. Neutraliser la propagation. Tout sauvetage individuel est subordonné à la sécurité du secteur.", srcDir: "EOD ch. 4",
+      roe: { n: 3, nom: "Confinement par la force", fin: "Contenir", detail: "Engagement autorisé sur zone contaminée ; neutralisation des vecteurs de propagation ; suppression de toute entité franchissant un périmètre ; coordination obligatoire.", src: "ROED §4.0" },
+      zone: "C2 — Confirmé (minimum)",
+      mesures: { src: "EOD §4.2", items: [
+        "Confinement immédiat du secteur",
+        "Verrouillage de tous les sas d'accès",
+        "Arrêt complet des échanges inter-zones",
+        "Mise hors service des circulations internes non essentielles",
+        "Suspension de toutes les opérations",
+        "Équipes NBC et médicales en alerte",
+        "Transmission prioritaire au commandement central" ] },
+      notes: [
+        ["Toute ventilation suspecte est arrêtée ; quarantaine du périmètre élargi ; marquage d'alerte renforcé.", "EOD §4.3"],
+        ["Symptômes (SUSPECT BIOLOGIQUE) : 1 → surveillance renforcée, 2 → isolement immédiat, 3 → confinement strict, 4+ → intervention sécurisée.", "EOD §4.4"],
+        ["Disparition en zone EXO : secteur C2 minimum, drones uniquement, ventilation réduite ou coupée, périmètre fermé.", "EOD §4.5"],
+        ["Toute circulation non autorisée = menace secondaire.", "EOD §4.2"] ],
+      interdits: { src: "EOD §4.6", items: [
+        "Entrer dans un secteur sans validation NBC",
+        "Contact avec un sujet suspect",
+        "Transporter un individu hors protocole de confinement",
+        "Utiliser un sujet comme guide ou référence",
+        "Ouvrir une zone scellée sans ordre direct",
+        "Désactiver un système de confinement actif" ] },
+      escalade: { vers: 4, src: "EOD §4.7, §5.1", items: [
+        ["Propagation confirmée → niveau 4 automatique", "EOD §4.7"],
+        ["Niveau 3 hors contrôle → niveau 4 après validation du commandement", "EOD §5.1"],
+        ["Contamination active confirmée ; propagation incontrôlée", "EOD §5.1"],
+        ["Rupture totale du confinement sectoriel", "EOD §5.1"],
+        ["Disparition multiple en zone EXO ou contaminée", "EOD §5.1"],
+        ["Adaptation comportementale d'une entité", "EOD §5.1"],
+        ["CRISE MAJEURE (un critère suffit) → niveau 4 automatique", "DOREX §11.1"] ] } },
+
+    { n: 4, nom: "Contamination active",
+      situation: "Contamination confirmée avec perte de contrôle d'un secteur, propagation active ou hostilité biologique avérée.", srcSit: "EOD ch. 5",
+      directive: "Doctrine exclusivement défensive. La limitation de la propagation prime sur toute considération locale, matérielle ou humaine. Toute perte sectorielle est acceptable.", srcDir: "EOD ch. 5",
+      roe: { n: 4, nom: "Neutralisation active", fin: "Neutraliser", detail: "Neutralisation systématique des menaces confirmées ; engagement sans restriction dans les zones validées ; destruction des structures biologiques hostiles ; suppression des entités adaptatives. Priorités : propagation → agents actifs → accès critiques → capacité biologique du terrain.", src: "ROED §5.0" },
+      zone: "C3 — Actif, puis C4 — Critique",
+      mesures: { src: "EOD §5.2", items: [
+        "Fermeture complète des modules et compartiments",
+        "Isolement total des secteurs affectés",
+        "Arrêt des flux internes : air, eau, transport, communications non essentielles",
+        "Alerte des unités NBC et de sécurité",
+        "Suspension de toutes les opérations secondaires",
+        "Restriction maximale des déplacements internes",
+        "Contrôle centralisé des systèmes critiques" ] },
+      notes: [
+        ["Sur ordre du commandement ou de l'IA de bord uniquement : neutralisation ciblée, destruction de compartiment, dépressurisation, scellement permanent, sacrifice d'un périmètre.", "EOD §5.3"],
+        ["MENACE NIVEAU 4 : apprentissage, anticipation, imitation de comportements humains, adaptation tactique, changement de stratégie.", "EOD §5.4"],
+        ["Toute zone non isolée est suspecte.", "EOD §5.2"] ],
+      interdits: { src: "EOD §5.5", items: [
+        "Récupération non sécurisée de personnel",
+        "Interaction non protégée avec une entité EXO",
+        "Désactiver un confinement actif",
+        "Ouvrir une zone scellée sans validation du commandement",
+        "Intervenir seul en secteur contaminé",
+        "Maintenir des objectifs secondaires non critiques" ] },
+      escalade: { vers: 5, src: "EOD §6.1", items: [
+        ["Niveau 4 non contenu → niveau 5 automatique (sans validation)", "EOD §6.1"],
+        ["Propagation incontrôlée multi-sectorielle", "EOD §6.1"],
+        ["Impossibilité de confinement local ou global", "EOD §6.1"],
+        ["Effondrement simultané des systèmes de sécurité", "EOD §6.1"],
+        ["Perte de contrôle de plusieurs zones critiques", "EOD §6.1"],
+        ["Rupture des communications internes majeures", "EOD §6.1"],
+        ["Menace directe sur l'intégrité structurelle", "EOD §6.1"],
+        ["Comportement biologique rendant toute intervention impossible", "EOD §6.1"] ] } },
+
+    { n: 5, nom: "Perte de contrôle",
+      situation: "L'installation ne peut plus assurer un confinement efficace. Propagation hors de contrôle local, risque d'effondrement systémique.", srcSit: "EOD ch. 6",
+      directive: "Préserver ce qui peut encore l'être. Empêcher toute sortie de contamination.", srcDir: "EOD ch. 6",
+      roe: { n: 5, nom: "Annulation tactique", fin: "Éradiquer", detail: "Engagement total sans distinction de cible ; suppression de toute activité biologique suspecte ; destruction des zones actives ; pas de discrimination tactique fine. Les systèmes automatisés peuvent viser les exposés.", src: "ROED §6.0" },
+      zone: "C4 — Critique, généralisé",
+      mesures: { src: "EOD §6.2", items: [
+        "Verrouillage global de l'installation",
+        "Coupure des communications inter-secteurs non essentielles",
+        "Arrêt des flux internes : air, eau, transport, logistique",
+        "Activation des protocoles de survie structurelle",
+        "Mise en sécurité (ou évacuation) des zones non compromises",
+        "Systèmes critiques en mode autonome",
+        "Centralisation des commandes restantes" ] },
+      notes: [
+        ["Bunkerisation si évacuation impossible : repli, scellement hermétique, énergie minimale, extinction des signaux, silence total, surveillance passive.", "EOD §6.3"],
+        ["Sacrifice de zone uniquement sur ordre du commandement ou de l'IA de bord ; zone sacrifiée = perdue à jamais.", "EOD §6.4"],
+        ["Autodestruction : les trois conditions réunies — confinement global impossible, risque avéré de dissémination hors site, aucune neutralisation fonctionnelle.", "EOD §6.5"],
+        ["Survie collective : 1. confinement global, 2. zones intactes, 3. personnel non exposé, 4. équipes restantes.", "EOD §6.6"] ],
+      interdits: { src: "EOD §6.7", items: [
+        "Toute émission non critique (silence opérationnel) : communications vitales uniquement",
+        "Échanges non essentiels ; regroupements non stratégiques",
+        "Signaux lumineux, sonores et électroniques non indispensables" ] },
+      escalade: null }
+  ],
+
+  /* Niveaux de zone (DOREX §7.3 ; C0 ✔ règle de table) et niveau DOREX minimal imposé (✔ règle de table) */
+  zones: [
+    { c: 0, nom: "Zone saine / non classée", condition: "aucune suspicion", mesures: "—", niveauMin: 0, src: "✔ règle de table" },
+    { c: 1, nom: "Préventif", condition: "suspicion uniquement", mesures: "surveillance accrue, accès restreint", niveauMin: 2, src: "DOREX §7.3" },
+    { c: 2, nom: "Confirmé", condition: "contamination probable", mesures: "accès interdit, drones uniquement", niveauMin: 3, src: "DOREX §7.3" },
+    { c: 3, nom: "Actif", condition: "présence biologique confirmée", mesures: "zone scellée, intervention NBC obligatoire", niveauMin: 4, src: "DOREX §7.3" },
+    { c: 4, nom: "Critique", condition: "propagation interne, perte de contrôle locale", mesures: "destruction de compartiment autorisée (sur ordre commandement / IA)", niveauMin: 4, src: "DOREX §7.3, §7.7" }
+  ],
+  /* Plusieurs zones C4 = perte de contrôle de plusieurs zones critiques (EOD §6.1) */
+  zonesC4Multiples: { seuil: 2, niveauMin: 5, src: "✔ règle de table — EOD §6.1" },
+  zoneRappels: [
+    ["Délimitation dès suspicion : fermeture des accès, verrouillage des sas, isolement de la ventilation, quarantaine du secteur entier, marquage lumineux.", "DOREX §7.2"],
+    ["Aucun accès ne s'ouvre sans validation sécurité + validation scientifique + enregistrement automatique. En cas de doute, le sas reste fermé.", "DOREX §7.4"],
+    ["Contamination aérienne = critique : arrêt de la ventilation de la zone, isolation des filtres, analyse atmosphérique complète.", "DOREX §7.5"],
+    ["Rupture de confinement : fermeture du secteur, alerte générale, évacuation des zones adjacentes, unités armées, suivi de trajectoire.", "DOREX §7.6"],
+    ["Disparition en zone EXO ou BIO → zone C2 minimum.", "DOREX §9.7, EOD §4.5"],
+    ["Une zone contaminée reste fermée jusqu'à validation complète de la neutralisation biologique.", "DOREX §7.1"] ],
+
+  /* Événements de la matrice d'escalade.
+     niveau : niveau minimal imposé (null = aucun) ; rel : true = « niveau +1 »
+     mode : "immediat" (sur critère), "auto" (automatique, sans validation), "validation" (validation du commandement requise) */
+  groupes: [
+    { id: "decouverte", titre: "Découverte et observation" },
+    { id: "mobiles", titre: "Entités mobiles" },
+    { id: "exposition", titre: "Contact et exposition" },
+    { id: "contamination", titre: "Contamination et symptômes" },
+    { id: "disparus", titre: "Personnel disparu" },
+    { id: "confinement", titre: "Confinement et commandement" },
+    { id: "crise", titre: "CRISE MAJEURE — un seul critère suffit", note: "Un critère suffit : niveau 4 automatique (DOREX §11.1, §11.3)." },
+    { id: "n5", titre: "Perte de contrôle (niveau 5)" }
+  ],
+  evenements: [
+    { id: "anomalie", g: "decouverte", lib: "Anomalie détectée (thermique, mouvement, masse, émission, structure, capteurs incohérents)", niveau: 0, mode: "immediat", src: "EOD §1.1" },
+    { id: "conf_visu", g: "decouverte", lib: "Confirmation visuelle d'une entité ou d'une structure biologique inconnue", niveau: 1, mode: "immediat", effet: "Périmètre de sécurité + drone de reconnaissance", src: "EOD §1.7, §2.1" },
+    { id: "mvt_auto", g: "decouverte", lib: "Mouvement autonome observé", niveau: 1, mode: "immediat", src: "EOD §1.7" },
+    { id: "reaction", g: "decouverte", lib: "Réaction à la présence humaine ou à un stimulus", niveau: 1, mode: "immediat", src: "EOD §1.7" },
+    { id: "multi_anom", g: "decouverte", lib: "Plusieurs anomalies simultanées", niveau: 1, mode: "immediat", src: "EOD §1.7" },
+    { id: "test5", g: "decouverte", lib: "Test de découverte passive : 2 « oui » ou plus sur 5", niveau: 2, mode: "immediat", effet: "Questions : mobile ? réagit à un stimulus ? croissance visible ? plusieurs entités similaires ? comportement répétitif ou organique ?", src: "DOREX §3.4" },
+
+    { id: "exploratoire", g: "mobiles", lib: "Entité exploratoire (déplacements sans cible, réagit aux sons / lumière)", niveau: 1, mode: "immediat", effet: "Augmenter la distance, surveillance drone, réduire les émissions", src: "DOREX §8.2, EOD §2.6" },
+    { id: "territorial", g: "mobiles", lib: "Entité territoriale (défend une zone, attaques préventives, protège une structure)", niveau: 2, mode: "immediat", effet: "Retrait immédiat des équipes, observation indirecte", src: "✔ règle de table — DOREX §8.2, EOD §3.7" },
+    { id: "predatoire", g: "mobiles", lib: "Comportement prédatoire (poursuite ciblée, interception, embuscade)", niveau: 3, mode: "immediat", effet: "Interruption de mission, préparation du confinement, renfort immédiat", src: "✔ règle de table — DOREX §8.2" },
+    { id: "adaptation", g: "mobiles", lib: "Adaptation comportementale (apprend, évite les pièges, anticipe, change de stratégie, imite)", niveau: 4, mode: "auto", statut: "MENACE NIVEAU 4", src: "DOREX §8.5, EOD §5.4" },
+
+    { id: "penetration", g: "exposition", lib: "Pénétration (même involontaire) en zone d'observation ou potentiellement contaminée", niveau: 2, mode: "immediat", src: "EOD §2.8, §3.1" },
+    { id: "inhalation", g: "exposition", lib: "Inhalation / exposition atmosphérique suspectée", niveau: 2, mode: "immediat", effet: "Arrêt ventilation de la zone, isolement du secteur complet, tests atmosphériques", src: "EOD §3.1, DOREX §4.3" },
+    { id: "fluide", g: "exposition", lib: "Contact avec un fluide, résidu ou matière organique inconnue", niveau: 2, mode: "immediat", effet: "Désinfection immédiate, retrait de l'équipement, confinement individuel", src: "EOD §3.1, DOREX §4.3" },
+    { id: "ouverture", g: "exposition", lib: "Ouverture d'une structure / d'un contenant biologique", niveau: 2, mode: "immediat", src: "EOD §3.1" },
+    { id: "nbc", g: "exposition", lib: "Perte d'intégrité d'un équipement NBC", niveau: 2, mode: "immediat", statut: "EXPOSÉ", effet: "Sujet EXPOSÉ : désarmé, isolé, surveillance biométrique", src: "EOD §3.1, §3.4" },
+    { id: "objet", g: "exposition", lib: "Récupération d'un objet ou échantillon non sécurisé", niveau: 2, mode: "immediat", src: "EOD §3.1" },
+    { id: "blessure", g: "exposition", lib: "Blessure ouverte en zone inconnue / EXO", niveau: 3, mode: "immediat", statut: "Contamination présumée", src: "✔ règle de table — DOREX §4.3" },
+
+    { id: "contam_pres", g: "contamination", lib: "Contamination présumée d'un membre", niveau: 3, mode: "immediat", src: "EOD §3.8, §4.1" },
+    { id: "symptomes", g: "contamination", lib: "Symptômes compatibles / multiples", niveau: 3, mode: "immediat", statut: "SUSPECT BIOLOGIQUE", effet: "Règle des symptômes : 1 surveillance renforcée, 2 isolement immédiat, 3 confinement strict, 4+ intervention sécurisée", src: "EOD §3.8, §4.4" },
+    { id: "sujet_anormal", g: "contamination", lib: "Comportement anormal / perte de contrôle d'un sujet exposé", niveau: 3, mode: "immediat", src: "EOD §3.8, §4.1" },
+    { id: "sympt_comport", g: "contamination", lib: "Symptôme comportemental (agressivité soudaine, isolement volontaire, refus des ordres, fascination pour les zones contaminées, protection d'un organisme)", rel: true, mode: "immediat", src: "DOREX §10.4" },
+    { id: "personnalite", g: "contamination", lib: "Changement de personnalité (connaissance impossible de la zone, « répond à autre chose »)", niveau: null, mode: "immediat", statut: "CONTAMINATION INDÉTERMINÉE", src: "DOREX §10.5" },
+    { id: "propagation", g: "contamination", lib: "Propagation confirmée", niveau: 4, mode: "auto", src: "EOD §4.7" },
+
+    { id: "disp_zone", g: "disparus", lib: "Disparition d'un membre dans la zone", niveau: 2, mode: "immediat", effet: "Silence > 5 min = disparu. 0–10 min : aucune intervention physique ; 10–20 min : drone, pas d'entrée non protégée ; 20–60 min : DISPARUE PROBABLE, récupération ≥ 3 en NBC", src: "EOD §2.8, DOREX §9" },
+    { id: "disp_exo", g: "disparus", lib: "Disparition en zone EXO / BIO", niveau: 3, mode: "immediat", effet: "Zone C2 minimum, drones uniquement, ventilation réduite ou coupée", src: "EOD §4.1, §4.5, DOREX §9.7" },
+    { id: "disp_multi", g: "disparus", lib: "Disparition multiple", niveau: 4, mode: "immediat", src: "EOD §5.1" },
+    { id: "aucune_trace", g: "disparus", lib: "Aucune trace d'une équipe disparue", rel: true, mode: "immediat", statut: "DISPARITION EXO PROBABLE", effet: "Surveillance ≥ 24 h, aucun retour non escorté", src: "DOREX §9.11" },
+    { id: "traces_exo", g: "disparus", lib: "Traces inconnues ou EXO d'une équipe disparue (après 60 min)", rel: true, mode: "immediat", statut: "DISPARITION EXO PROBABLE", effet: "Traité comme l'absence de trace : surveillance ≥ 24 h, aucun retour non escorté", src: "✔ règle de table — DOREX §9.11" },
+
+    { id: "rupture_locale", g: "confinement", lib: "Rupture du confinement local", niveau: 3, mode: "immediat", effet: "Fermeture du secteur, alerte générale, évacuation des zones adjacentes, suivi de trajectoire", src: "EOD §3.8, DOREX §7.6" },
+    { id: "incoherence", g: "confinement", lib: "Incohérence critique des rapports d'équipe", niveau: 3, mode: "immediat", src: "EOD §4.1" },
+    { id: "n2_non_resolu", g: "confinement", lib: "Situation de niveau 2 non résolue", niveau: 3, mode: "validation", src: "EOD §4.1" },
+    { id: "n3_hors_ctrl", g: "confinement", lib: "Situation de niveau 3 hors contrôle", niveau: 4, mode: "validation", src: "EOD §5.1" },
+    { id: "rupture_totale", g: "confinement", lib: "Rupture totale du confinement sectoriel", niveau: 4, mode: "immediat", src: "EOD §5.1" },
+
+    { id: "cm_hors_zone", g: "crise", lib: "Contamination confirmée hors zone de confinement", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+    { id: "cm_secteur", g: "crise", lib: "Perte de contrôle d'un secteur entier", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+    { id: "cm_disp_simult", g: "crise", lib: "Disparition simultanée de plusieurs membres", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+    { id: "cm_comms", g: "crise", lib: "Rupture des communications internes", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+    { id: "cm_hostilite", g: "crise", lib: "Hostilité généralisée d'une entité EXO ou ORG", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+    { id: "cm_propag", g: "crise", lib: "Propagation rapide non contenue", niveau: 4, mode: "auto", statut: "CRISE MAJEURE", src: "DOREX §11.1" },
+
+    { id: "n4_non_contenu", g: "n5", lib: "Niveau 4 non contenu", niveau: 5, mode: "auto", src: "EOD §6.1" },
+    { id: "multi_sect", g: "n5", lib: "Propagation incontrôlée multi-sectorielle", niveau: 5, mode: "immediat", src: "EOD §6.1" },
+    { id: "conf_impossible", g: "n5", lib: "Impossibilité de confinement local ou global", niveau: 5, mode: "immediat", src: "EOD §6.1" },
+    { id: "integrite", g: "n5", lib: "Menace directe sur l'intégrité structurelle", niveau: 5, mode: "immediat", src: "EOD §6.1" }
+  ],
+
+  /* ---------- Onglet Escouade (suivi individuel des marines) ---------- */
+  escouade: {
+    /* Classes proposées (saisie libre possible) : carrières du livre de base, puis spécialités Colonial Marines */
+    classes: [
+      "Marine colonial", "Marshal colonial", "Agent de la Compagnie", "Gamin", "Médecin", "Officier", "Pilote", "Ouvrier", "Scientifique",
+      "Fusilier", "Artilleur Smartgun", "Technicien de combat", "Infirmier", "Opérateur radio", "Conducteur / pilote de navette", "Sous-officier" ],
+    /* Statuts DOREX individuels — libellés du glossaire (dorex-doctrine).
+       grav : 0 aucun, 1 surveillance (badge ambre), 2 contamination possible ou avérée (badge rouge) */
+    statuts: [
+      { id: "aucun", lib: "Aucun", grav: 0 },
+      { id: "contact", lib: "CONTACT", grav: 1, def: "interaction, volontaire ou non, avec une entité au-delà de sa simple détection", src: "EOD §1.0" },
+      { id: "expose", lib: "EXPOSÉ / Sujet EXO", grav: 1, def: "a évolué en environnement EXO ou a pu être affecté ; désarmé, isolé, surveillance biométrique ; maintenu jusqu'à infirmation", src: "EOD §3.4" },
+      { id: "contamine", lib: "Contaminé", grav: 2, def: "exposition confirmée, contact fluide ou organisme, inhalation en zone suspecte, blessure en zone non sécurisée, physiologie anormale après contact", src: "DOREX §5.1" },
+      { id: "suspect", lib: "SUSPECT BIOLOGIQUE", grav: 2, def: "symptômes compatibles ; 1 surveillance renforcée, 2 isolement immédiat, 3 confinement strict, 4+ intervention sécurisée", src: "EOD §4.4" },
+      { id: "indetermine", lib: "CONTAMINATION INDÉTERMINÉE", grav: 2, def: "changement de personnalité", src: "DOREX §10.5" },
+      { id: "disparu", lib: "Disparu", grav: 1, def: "silence radio de plus de 5 min, perte de signal, pas de réponse, disparition visuelle", src: "DOREX §9.1" },
+      { id: "disparue_probable", lib: "DISPARUE PROBABLE", grav: 1, def: "silence de 20 à 60 min", src: "DOREX §9.5" },
+      { id: "disparition_exo", lib: "DISPARITION EXO PROBABLE", grav: 2, def: "aucune trace retrouvée, ou traces inconnues / EXO", src: "DOREX §9.11" } ],
+    /* États de santé et cardiogramme associé.
+       ecg.duree : durée d'une période du motif (s) ; ecg.pos : position des battements dans la période (0–1) ;
+       ecg.amp : amplitude (1 = normale), un nombre ou une valeur par battement. BPM = nb battements × 60 / durée.
+       rythme : précision affichée après la fréquence (facultatif). */
+    sante: [
+      { id: "excellent", lib: "Excellent", bpm: "58", ecg: { duree: 2.07, pos: [.25, .75], amp: 1 } },
+      { id: "bon", lib: "Bon", bpm: "72", ecg: { duree: 2.5, pos: [.167, .5, .833], amp: 1 } },
+      { id: "moyen", lib: "Moyen", bpm: "96", ecg: { duree: 2.5, pos: [.125, .375, .625, .875], amp: .95 } },
+      { id: "mauvais", lib: "Mauvais", bpm: "126", ecg: { duree: 2.38, pos: [.1, .3, .5, .7, .9], amp: .85 } },
+      { id: "critique", lib: "Critique", bpm: "≈ 45", rythme: "irrégulier, faible", ecg: { duree: 4, pos: [.1, .34, .8], amp: [.45, .28, .38] } },
+      { id: "decede", lib: "Décédé", bpm: "0", rythme: "DÉCÉDÉ", ecg: { duree: 0, pos: [] } } ],
+    /* Parties du corps (gauche / droite = côté du marine, vu de face) */
+    corps: [
+      { id: "tete", lib: "Tête" }, { id: "torse", lib: "Torse" },
+      { id: "brasG", lib: "Bras gauche" }, { id: "brasD", lib: "Bras droit" },
+      { id: "jambeG", lib: "Jambe gauche" }, { id: "jambeD", lib: "Jambe droite" } ]
+  },
+
+  /* ---------- Onglet Règles ----------
+     Contenu propre à l'onglet ; le reste (niveaux, événements, zones, ROE) est lu dans les
+     données ci-dessus par les générateurs (champ gen) de rendreRegles().
+     Format d'un bloc : { titre, src, intro, items, ordre, interdits, coches, cartes, note, gen }
+     - item : "texte" ou ["texte", "source"] ; **gras** autorisé.
+     - carte : { titre, lignes: [[libellé, texte]], texte, src }.
+     Une section a des blocs et/ou des sous-sections repliables (sous: [{ titre, src, blocs }]). */
+  regles: {
+    sections: [
+      { id: "principes", titre: "Principes importants", blocs: [
+        { titre: "Principes généraux", src: "DOREX §1.2", items: [
+          "La sécurité biologique prime sur toute mission.",
+          "Toute entité inconnue est présumée hostile ou contaminante.",
+          ["L'absence de réaction n'est pas une preuve d'innocuité ; l'immobilité n'est pas un indicateur de sécurité.", "DOREX §1.2, §6.2"],
+          "Toute exposition est une contamination potentielle.",
+          ["« Aucune réaction immédiate = absence de danger » est la cause majeure de mortalité différée.", "DOREX §4.4"],
+          ["Tout changement après une exposition = contamination jusqu'à preuve du contraire.", "DOREX §10.1"],
+          ["Toute structure peut être vivante, même immobile.", "DOREX §6.2"],
+          ["**Ce qui n'est pas compris est dangereux. Ce qui est silencieux est surveillé. Ce qui est vivant est contenu.**", "DOREX A7"] ],
+          note: ["73 % des incidents critiques commencent par une interaction non autorisée ; 61 % des contaminations viennent d'un non-respect de l'observation ; 88 % des pertes humaines suivent une rupture du confinement initial.", "DOREX §1.1"] },
+        { titre: "Règles de décision", items: [
+          ["**Doute → niveau supérieur.**", "EOD §1.7, §2.8, §3.8"],
+          ["**Plusieurs déclencheurs actifs → le plus élevé s'applique.** On ne redescend jamais sous un niveau déjà imposé par un autre événement.", "✔ règle de table"],
+          ["**Plusieurs catégories de menace → le risque le plus élevé s'applique.** Ex. : organisme + toxine → ORG ; spore + mutation inconnue → EXO.", "DOREX §2.2"],
+          ["**Désaccord → la décision la plus restrictive s'applique.**", "DOREX §1.3"],
+          ["En cas d'incertitude, l'exposition est considérée comme avérée jusqu'à vérification.", "EOD §3.1"],
+          ["Zone classée plus dangereuse que ce que couvre le niveau actuel → le niveau DOREX monte au minimum imposé par la zone.", "✔ règle de table"],
+          ["Chaque niveau hérite des interdits des niveaux inférieurs : aucun interdit n'est levé en montant.", "✔ règle de table"],
+          ["Initiative individuelle interdite hors chaîne de commandement.", "EOD §1.5, §4.6"],
+          ["Les documents DOREX sont des consignes et des recommandations qui ne tiennent pas compte de la réalité du terrain : sur place, l'ordre du commandement prime.", "✔ règle de table"] ] },
+        { gen: "annonce" },
+        { titre: "Hiérarchie de décision", src: "ROED §0.0", ordre: true, items: [
+          "État biologique (DOREX)", "Doctrine d'engagement (ROE)", "Validation du commandement / IA de bord", "Exécution" ] },
+        { titre: "Chaîne de commandement", src: "DOREX §1.3", ordre: true, items: [
+          "Officier en charge de la mission — autorité tactique",
+          "Officier scientifique — évaluation",
+          "Commandement de la mission — validation stratégique",
+          "IA de bord — support décisionnel" ],
+          note: ["Seuls le commandement ou l'IA de bord autorisent la neutralisation lourde, le sacrifice de zone et la hausse du niveau ROE.", "EOD §5.3, §6.4, ROED §0.0"] },
+        { titre: "Responsabilité individuelle", src: "DOREX §1.4", intro: "Tout membre d'équipage :", items: [
+          "signale toute anomalie", "respecte les distances", "n'interagit jamais sans ordre explicite", "interrompt toute exposition suspectée" ],
+          note: "**Le non-signalement équivaut à une faute critique.**" },
+        { titre: "Priorités en intervention", src: "DOREX A5", ordre: true, items: [
+          "Sécurité du bâtiment / vaisseau", "Confinement biologique", "Protection des équipes restantes", "Récupération du matériel", "Sauvetage individuel" ],
+          note: ["**Survie collective** : la survie d'un individu n'a aucune priorité sur celle de l'installation ou de la population restante.", "DOREX §11.8, EOD §6.6"] }
+      ] },
+
+      { id: "definitions", titre: "Définitions", blocs: [
+        { titre: "Documents de référence", cartes: [
+          { titre: "DOREX", lignes: [["Nom", "Doctrine Opérationnelle de Réponse Exobiologique"], ["Rôle", "doctrine et procédures par situation"], ["Répond à", "« Que se passe-t-il ? Quelle procédure ? »"]] },
+          { titre: "EOD", lignes: [["Nom", "Échelle Opérationnelle DOREX"], ["Rôle", "échelle 0 à 5, un chapitre par niveau ; fait référence pour les niveaux"], ["Répond à", "« À quel niveau sommes-nous, qu'impose-t-il ? »"]] },
+          { titre: "ROED", lignes: [["Nom", "Règles d'engagement DOREX"], ["Rôle", "emploi de la force, niveaux 0 à 5"], ["Répond à", "« Quelle force est permise ? »"]] } ],
+          note: "Références : « §3.1 » = paragraphe, « ch. 2 » = chapitre, « A1 à A7 » = annexes du DOREX." },
+        { titre: "Classes de menace", src: "DOREX §2.1", cartes: [
+          { titre: "BIO — Agent biologique", texte: "virus, spores, bactéries, toxines" },
+          { titre: "ORG — Organisme vivant", texte: "faune, parasite, entité mobile" },
+          { titre: "EXO — Origine inconnue", texte: "structure ou forme de vie non identifiée" },
+          { titre: "ENV — Facteur environnemental", texte: "gaz, radiation, atmosphère hostile" },
+          { titre: "IND — Phénomène anormal", texte: "manifestation non classifiable" } ],
+          items: [
+            ["Toute structure inconnue est classée **EXO jusqu'à preuve du contraire**.", "DOREX §6.1, EOD §1.4"],
+            ["Une entité mobile est classée **ORG ou EXO mobile**.", "DOREX §8.1"],
+            ["Plusieurs catégories → le risque le plus élevé s'applique.", "DOREX §2.2"] ] },
+        { titre: "Statuts", cartes: [
+          { titre: "CONTACT", lignes: [["Porte sur", "la situation"], ["Définition", "interaction, volontaire ou non, avec une entité au-delà de sa simple détection"]], src: "EOD §1.0" },
+          { titre: "Premier contact", lignes: [["Porte sur", "la situation"], ["Définition", "toute interaction directe ou indirecte : toucher, inhalation, fluide, entrée en zone occupée, ouverture d'un contenant biologique"]], src: "DOREX §4.1" },
+          { titre: "EXPOSÉ / Sujet EXO", lignes: [["Porte sur", "une personne"], ["Définition", "tout personnel ayant évolué en environnement EXO ou susceptible d'avoir été affecté ; statut maintenu jusqu'à infirmation (détection, quarantaine, expertise médicale)"]], src: "EOD §3.4" },
+          { titre: "Contaminé", lignes: [["Porte sur", "une personne"], ["Définition", "exposition confirmée, contact avec un fluide ou un organisme, inhalation en zone suspecte, blessure en zone non sécurisée, physiologie anormale après contact"]], src: "DOREX §5.1" },
+          { titre: "SUSPECT BIOLOGIQUE", lignes: [["Porte sur", "une personne"], ["Définition", "apparition de symptômes compatibles"]], src: "EOD §4.4" },
+          { titre: "CONTAMINATION INDÉTERMINÉE", lignes: [["Porte sur", "une personne"], ["Définition", "changement de personnalité (voir Procédures)"]], src: "DOREX §10.5" },
+          { titre: "Disparu", lignes: [["Porte sur", "une personne ou une équipe"], ["Définition", "silence radio de plus de 5 min, perte de signal, pas de réponse, disparition visuelle, rapports incohérents"]], src: "DOREX §9.1" },
+          { titre: "DISPARUE PROBABLE", lignes: [["Porte sur", "une équipe"], ["Définition", "silence de 20 à 60 min"]], src: "DOREX §9.5" },
+          { titre: "DISPARITION EXO PROBABLE", lignes: [["Porte sur", "une équipe"], ["Définition", "aucune trace retrouvée (ou traces inconnues / EXO, ✔ règle de table)"]], src: "DOREX §9.11" },
+          { titre: "MENACE NIVEAU 4", lignes: [["Porte sur", "une entité"], ["Définition", "apprentissage, anticipation, imitation de comportements humains, adaptation tactique, changement de stratégie"]], src: "EOD §5.4" },
+          { titre: "CRISE MAJEURE", lignes: [["Porte sur", "la situation"], ["Définition", "un des six critères de crise (voir Matrice de décision) ; déclenche le niveau 4"]], src: "DOREX §11.1" } ] },
+        { titre: "Sigles et termes", items: [
+          "**N0 à N5** — niveaux d'alerte DOREX (échelle EOD).",
+          ["**C0 à C4** — niveaux de confinement d'une zone. C0 = zone saine / non classée.", "DOREX §7.3 ; C0 ✔ règle de table"],
+          ["**ROE** — règles d'engagement (« Rules of Engagement ») : force permise, niveaux 0 à 5.", "ROED"],
+          ["**NBC** — protection nucléaire, biologique, chimique : protection respiratoire intégrale, combinaison étanche, protection oculaire, gants et surbottes, contrôle d'étanchéité avant engagement.", "EOD §3.3"],
+          ["**IA de bord** — support décisionnel de la chaîne de commandement ; peut ordonner neutralisation, sacrifice de zone, hausse du ROE.", "DOREX §1.3, EOD §5.3, §6.4"],
+          ["**Silence opérationnel** — communications vitales uniquement, aucune émission non critique.", "EOD §6.7"],
+          ["**Bunkerisation** — repli et scellement hermétique quand l'évacuation est impossible.", "EOD §6.3"],
+          ["**Sacrifice de zone** — dépressurisation, verrouillage permanent, destruction ; la zone est perdue à jamais.", "EOD §6.4"],
+          "**AUTO** (badge) — passage automatique, sans validation du commandement.",
+          "**VALIDATION CDT** (badge) — passage après validation du commandement.",
+          "**+1** (badge) — niveau actif au moment de l'événement, plus un.",
+          "**✔ règle de table** — arbitrage retenu pour la partie quand les documents se taisent ou se contredisent." ] }
+      ] },
+
+      { id: "niveaux", titre: "Niveaux DOREX 0 à 5", blocs: [
+        { gen: "recapNiveaux" },
+        { titre: "Règles de passage", items: [
+          ["**0 → 1** : immédiat sur critère ; doute → niveau supérieur.", "EOD §1.7"],
+          ["**1 → 2** : immédiat ; le doute suffit.", "EOD §2.8"],
+          ["**2 → 3** : immédiat sur critère ; situation de N2 non résolue → N3 **après validation du commandement**.", "EOD §3.8, §4.1"],
+          ["**3 → 4** : propagation confirmée → **automatique** ; N3 hors contrôle → N4 **après validation du commandement**.", "EOD §4.7, §5.1"],
+          ["**4 → 5** : N4 non contenu → **automatique**, sans validation.", "EOD §6.1"] ],
+          note: ["Un niveau peut être sauté : test des 5 questions avec 2 « oui » ou plus → N2 direct ; adaptation comportementale → N4. Chaque changement de niveau s'annonce à la radio.", "DOREX §3.4, §8.5"] },
+        { gen: "fichesNiveaux" }
+      ] },
+
+      { id: "matrice", titre: "Matrice de décision", blocs: [
+        { titre: "Comment lire la matrice", items: [
+          "Le **niveau requis** est le plus élevé de tous les déclencheurs actifs (événements et zones).",
+          ["**Sans badge de mode** : passage immédiat dès que le critère est constaté ; le doute suffit.", "EOD §2.8"],
+          ["**AUTO** : passage automatique, sans validation du commandement.", "EOD §4.7, §6.1, DOREX §11.1"],
+          ["**VALIDATION CDT** : passage après validation du commandement.", "EOD §4.1, §5.1"],
+          ["**+1** : niveau actif au moment de l'événement, plus un.", "DOREX §9.11, §10.4"],
+          "**STATUT** : l'événement donne un statut sans imposer de niveau." ] },
+        { gen: "matrice" },
+        { titre: "Validation du commandement", items: [
+          ["**Validation requise** : situation de N2 non résolue → N3 ; situation de N3 hors contrôle → N4.", "EOD §4.1, §5.1"],
+          ["**Sans validation** : propagation confirmée → N4 ; crise majeure → N4 ; adaptation comportementale → N4 ; N4 non contenu → N5.", "EOD §4.7, §6.1, DOREX §8.5, §11.1"],
+          ["Dans l'appli : si le niveau visé n'est imposé que par un déclencheur « validation », la fenêtre de confirmation propose « Validé » ou « Non validé » ; un refus laisse un avertissement affiché.", "fonctionnement de l'appli"] ] },
+        { gen: "minuteries" },
+        { titre: "Désescalade", items: [
+          ["Les documents ne prévoient **aucune procédure de désescalade** : c'est voulu par l'auteur de la doctrine.", "✔ règle de table"],
+          ["Une zone contaminée reste fermée jusqu'à validation complète de la neutralisation biologique.", "DOREX §7.1"],
+          ["La disparition des symptômes n'est **pas** une amélioration : maintenir la surveillance.", "DOREX §10.9"] ] },
+        { titre: "Désescalade dans l'appli", items: [
+          "Décocher un événement ou baisser une zone fait redescendre le niveau au maximum imposé par ce qui reste actif, **seulement** si le niveau actif était justifié par les déclencheurs.",
+          "Un niveau monté à la main n'est pas redescendu automatiquement.",
+          "Bouton « Baisser le niveau » (onglet Niveau) : la confirmation liste les déclencheurs encore actifs ; s'ils imposent plus, un avertissement reste affiché.",
+          "Événement « +1 » : le niveau de base est figé au moment où il est coché ; le décocher puis le recocher recalcule cette base." ] }
+      ] },
+
+      { id: "roe", titre: "Règles d'engagement", blocs: [
+        { titre: "Synchronisation avec le niveau DOREX", src: "ROED §0.0", items: [
+          "**Le niveau DOREX actif fixe le niveau ROE minimal.**",
+          "Aucun engagement en deçà des restrictions du niveau DOREX en cours.",
+          "Le commandement ou l'IA de bord peut **relever** le ROE, jamais le baisser sous le seuil DOREX.",
+          "S'applique à tous : militaires, drones armés, systèmes autonomes de défense, IA de bord, plateformes de confinement. Toute déviation = faille de doctrine critique." ] },
+        { titre: "Principes d'engagement", src: "ROED Résumé", items: [
+          "Force proportionnée", "**Confinement avant destruction**", "Protection des personnels", "Limitation de la propagation", "Coordination obligatoire" ] },
+        { gen: "roe" },
+        { titre: "Conditions de tir, armes et drones", items: [
+          ["Armes autorisées **uniquement si** menace confirmée **et** extraction impossible **et** risque immédiat pour l'équipage ; sinon **retrait prioritaire**. Vaut surtout aux niveaux 1 et 2 ; au-delà, le ROE du niveau prime.", "DOREX §8.3 — ✔ règle de table"],
+          ["ROE 0 : aucun armement actif, aucune visée.", "ROED §1.0"],
+          ["ROE 1 : pas de verrouillage de tir ; drones armés interdits sauf ordre direct.", "ROED §2.0"],
+          ["ROE 2 : tir uniquement sur menace directe confirmée ; aucune poursuite, aucune frappe préventive.", "ROED §3.0"],
+          ["Niveau 0 : drone uniquement sur ordre du commandement ou en cas de perte de visibilité.", "EOD §1.3 — ✔ règle de table"],
+          ["Niveau 1 : explosifs et armes lourdes interdits.", "EOD §2.5"],
+          ["À partir du niveau 2, les personnels exposés sont désarmés.", "EOD §3.4"],
+          ["Interdit envers une entité : la nourrir, l'attirer, simuler ses comportements, tester sa réaction sans autorisation.", "DOREX §8.4"] ] },
+        { titre: "Conséquences pour l'équipe", items: [
+          ["ROE 3 : un membre contaminé qui franchit un périmètre est une « entité franchissant un périmètre ».", "ROED §4.0"],
+          ["ROE 5 : engagement sans distinction de cible ; les systèmes automatisés visent tout ce qui est biologiquement suspect, membres exposés de l'équipe compris.", "ROED §6.0"] ] }
+      ] },
+
+      { id: "zones", titre: "Zones de confinement", blocs: [
+        { titre: "Principe", items: [
+          ["Le confinement prime sur toute opération. Une zone contaminée reste fermée **jusqu'à validation complète de la neutralisation biologique**.", "DOREX §7.1"],
+          ["Le niveau DOREX (0 à 5) qualifie la **situation** ; le niveau C qualifie l'**état d'une zone**. Plusieurs zones peuvent avoir des niveaux C différents sous un même niveau DOREX.", "✔ règle de table"] ] },
+        { gen: "zonesC" },
+        { gen: "zonesCorrespondance" },
+        { titre: "Délimitation dès suspicion", src: "DOREX §7.2", ordre: true, items: [
+          "Fermeture des accès physiques", "Verrouillage des sas", "Isolement de la ventilation", "Mise en quarantaine du secteur entier", "Marquage lumineux d'alerte" ] },
+        { titre: "Accès et sas", src: "DOREX §7.4", items: [
+          "Aucun accès ne s'ouvre sans **validation sécurité + validation scientifique + enregistrement automatique**.",
+          "En cas de doute, **le sas reste fermé**." ] },
+        { titre: "Ventilation et atmosphère", src: "DOREX §7.5", items: [
+          "Toute contamination aérienne est **critique** : arrêt de la ventilation de la zone, isolation des filtres, analyse atmosphérique complète, remplacement si doute.",
+          ["Au niveau 3, toute ventilation suspecte est arrêtée.", "EOD §4.3"] ] },
+        { titre: "Rupture de confinement", src: "DOREX §7.6", intro: "Si une entité ou une contamination sort de la zone :", ordre: true, items: [
+          "Fermeture immédiate du secteur", "Alerte générale", "Évacuation des zones adjacentes", "Déploiement des unités armées", "Suivi de trajectoire obligatoire" ],
+          note: ["Selon l'ampleur : rupture locale → N3 ; rupture totale du confinement sectoriel → N4 ; contamination hors zone de confinement = CRISE MAJEURE → N4.", "EOD §3.8, §5.1, DOREX §11.1"] },
+        { titre: "Disparition en zone EXO / BIO", src: "DOREX §9.7, EOD §4.5", items: [
+          "Zone **C2 minimum**, drones uniquement, accès secondaires fermés, ventilation réduite ou coupée, périmètre fermé." ] },
+        { titre: "Principe de sacrifice", src: "DOREX §7.7, §11.6 ; EOD §5.3, §6.4", items: [
+          "Si la propagation ne peut être contenue : isolement complet du module, dépressurisation possible, destruction structurelle autorisée.",
+          "**Uniquement sur ordre du commandement ou de l'IA de bord.**",
+          "Zone sacrifiée = perdue définitivement.",
+          "« Une perte localisée est préférable à une contamination globale. »" ] }
+      ] },
+
+      { id: "procedures", titre: "Procédures par situation", sous: [
+        { titre: "Découverte passive — test des 5 questions", src: "DOREX §3", blocs: [
+          { intro: "Première identification d'un élément inconnu **sans interaction** : signature thermique anormale, mouvement à distance, masse organique inconnue, signal biologique incohérent, structure vivante supposée. Correspond aux niveaux 0 → 1." },
+          { titre: "Protocole", src: "DOREX §3.2", ordre: true, items: [
+            "Arrêt immédiat de la progression", "Périmètre de sécurité", "Capteurs longue portée",
+            ["Drone : uniquement sur ordre du commandement", "EOD §1.3 — ✔ règle de table"],
+            "Enregistrement continu (vidéo + bio-scan)" ] },
+          { titre: "Interdits absolus", src: "DOREX §3.3", interdits: true, items: [
+            "Approche manuelle", "Contact physique", "Éclairage agressif (flash, stroboscope)", "Prélèvement", "Décision individuelle" ] },
+          { titre: "Test des 5 questions", src: "DOREX §3.4", ordre: true, items: [
+            "Est-ce mobile ?", "Réagit-il à un stimulus ?", "Y a-t-il une croissance visible ?", "Y a-t-il plusieurs entités similaires ?", "Le comportement est-il répétitif ou organique ?" ],
+            note: "**2 « oui » ou plus → niveau 2 minimum** (le niveau 1 peut être sauté)." } ] },
+        { titre: "Premier contact et cas critiques", src: "DOREX §4", blocs: [
+          { intro: ["Toute interaction directe ou indirecte : toucher, inhalation, exposition à un fluide, entrée dans une zone occupée, ouverture d'un contenant biologique. Correspond au niveau 2.", "DOREX §4.1"] },
+          { titre: "Procédure immédiate", src: "DOREX §4.2", ordre: true, items: [
+            "STOP activité",
+            ["Annonce radio : « Escouade X, annonce DOREX prioritaire : passage en niveau 2 »", "✔ règle de table"],
+            "Isolement de la zone", "Désignation du sujet exposé", "Déploiement médical" ] },
+          { titre: "Cas critiques", src: "DOREX §4.3", cartes: [
+            { titre: "Contact avec un fluide inconnu", texte: "désinfection immédiate, retrait de l'équipement, confinement individuel" },
+            { titre: "Inhalation suspectée", texte: "arrêt de la ventilation de la zone, isolement du secteur complet, tests atmosphériques" },
+            { titre: "Blessure ouverte en zone inconnue", texte: "contamination présumée immédiate, **niveau 3 automatique**", src: "✔ règle de table (principe de précaution)" } ] } ] },
+        { titre: "Contamination personnelle", src: "DOREX §5", blocs: [
+          { titre: "Qui est contaminé", src: "DOREX §5.1", items: [
+            "exposition confirmée", "contact avec un fluide ou un organisme", "inhalation en zone suspecte", "blessure en environnement non sécurisé", "physiologie anormale après contact" ],
+            note: ["Tout exposé potentiel reçoit d'abord le statut **EXPOSÉ / Sujet EXO**.", "EOD §3.4"] },
+          { titre: "Mesures immédiates", src: "DOREX §5.2, EOD §3.4", ordre: true, items: [
+            "Désarmement du sujet", "Isolement physique", "Surveillance continue (biométrie + vidéo)", "Interdiction de contact avec l'équipage", "Décontamination contrôlée si autorisée" ],
+            note: ["Le sujet est un point de contamination potentiel jusqu'à validation médicale complète. Statut opérationnel conservé uniquement sur décision médicale.", "DOREX §5.4, EOD §3.4"] },
+          { titre: "Interdits en cas de suspicion", src: "DOREX §10.7", interdits: true, items: [
+            "Contact physique non protégé", "Discussion non supervisée", "Transport en zone commune", "Usage de l'individu comme guide" ] },
+          { items: [["**Non-confiance** : aucun exposé n'est exempt de contamination.", "DOREX §10.8"]] } ] },
+        { titre: "Symptômes et règle des symptômes", src: "DOREX §10, EOD §4.4", blocs: [
+          { titre: "Règle des symptômes", src: "DOREX §10.6, EOD §4.4", cartes: [
+            { titre: "1 symptôme", texte: "surveillance renforcée" },
+            { titre: "2 symptômes", texte: "**isolement immédiat**" },
+            { titre: "3 symptômes", texte: "**confinement strict**" },
+            { titre: "4 symptômes ou plus", texte: "**intervention sécurisée**" } ],
+            note: ["Symptômes compatibles (statut SUSPECT BIOLOGIQUE) : fièvre inexpliquée, lésions cutanées, hallucinations ou confusion, agressivité soudaine, troubles cognitifs, comportement obsessionnel, perte de reconnaissance de l'environnement ou de l'équipage.", "EOD §4.4"] },
+          { titre: "Symptômes physiques gradués", src: "DOREX §10.2", cartes: [
+            { titre: "Léger", lignes: [["Symptômes", "fatigue inhabituelle, légère fièvre, irritation cutanée, toux sèche, picotements"], ["Mesure", "surveillance renforcée"]] },
+            { titre: "Intermédiaire", lignes: [["Symptômes", "fièvre persistante, lésions cutanées, douleurs internes, tremblements, troubles visuels"], ["Mesure", "**isolement immédiat**"]] },
+            { titre: "Critique", lignes: [["Symptômes", "hémorragies, déformations corporelles, perte de mobilité, sécrétions inconnues, croissance tissulaire anormale"], ["Mesure", "**quarantaine renforcée + intervention médicale d'urgence**"]] } ] },
+          { titre: "Symptômes neurologiques", src: "DOREX §10.3", intro: "→ contamination **cognitive**", items: [
+            "confusion", "perte de mémoire récente", "désorientation spatiale", "hallucinations auditives ou visuelles", "perte de reconnaissance des membres d'équipage" ] },
+          { titre: "Symptômes comportementaux", src: "DOREX §10.4", intro: "→ **niveau d'alerte +1 automatique**", items: [
+            "agressivité soudaine", "isolement volontaire", "refus des ordres", "fascination pour les zones contaminées", "protection d'un organisme ou d'une structure" ] },
+          { titre: "Signes d'évolution critique", src: "DOREX §5.3", items: [
+            "fièvre inexpliquée, modification cutanée, hallucinations ou confusion, agressivité soudaine, comportement obsessionnel, perte de reconnaissance sociale" ] },
+          { titre: "Disparition des symptômes", src: "DOREX §10.9", items: [
+            "Ce n'est **pas** une amélioration : adaptation biologique, phase dormante ou modification comportementale avancée → **maintenir la surveillance**." ] } ] },
+        { titre: "Changement de personnalité", src: "DOREX §10.5", blocs: [
+          { intro: "Statut **CONTAMINATION INDÉTERMINÉE** si le sujet :", items: [
+            "a un comportement incohérent avec son historique",
+            "a des priorités vitales modifiées",
+            "montre une **connaissance impossible de la zone**",
+            "agit comme s'il « répondait à autre chose »" ],
+            note: ["Tout changement après une exposition = contamination jusqu'à preuve du contraire.", "DOREX §10.1"] } ] },
+        { titre: "Structures exobiologiques A à E", src: "DOREX §6", blocs: [
+          { titre: "Classement EXO — un critère suffit", src: "DOREX §6.1", items: [
+            "origine inconnue", "composition organique non référencée", "réaction à la présence humaine", "croissance ou modification dans le temps", "émission de chaleur, de gaz ou de signal biologique", "comportement cyclique ou pulsatile" ],
+            note: ["**Règle absolue** : toute structure peut être vivante, même immobile.", "DOREX §6.2"] },
+          { titre: "Typologie", src: "DOREX §6.3", cartes: [
+            { titre: "A — Masse organique indifférenciée", lignes: [["Aspect", "amas, parois, tissus, couches superposées"], ["Risques", "digestion lente, réaction au contact, effondrement ou contraction"], ["Procédure", "observation à distance, scan thermique, aucun contact"]] },
+            { titre: "B — Structure creuse / cavitaire", lignes: [["Aspect", "tunnels, cavités, alvéoles, conduits"], ["Risques", "habitat actif, pièges biologiques, propagation interne"], ["Procédure", "**drone uniquement**, marquage des entrées, aucune pénétration non sécurisée"]] },
+            { titre: "C — Structure ovoïde / encapsulée", lignes: [["Aspect", "sphères, capsules, masses lisses"], ["Risques", "incubation, déclenchement par contact ou vibration, libération soudaine"], ["Procédure", "**périmètre de 20 m minimum**, aucun choc ni vibration, destruction **uniquement sur ordre, niveau 4 ou plus**"]] },
+            { titre: "D — Réseau fibreux / organique étendu", lignes: [["Aspect", "racines, nervures, membranes, filaments"], ["Risques", "propagation rapide, connexion entre zones, réaction en chaîne"], ["Procédure", "cartographie complète, aucune rupture physique, identifier les points nodaux"]] },
+            { titre: "E — Structure réactive", lignes: [["Aspect", "contraction, pulsation, mouvement lent ; réagit à la lumière, au bruit, à la chaleur"], ["Risques", "intelligence biologique possible, défense active, adaptation"], ["Procédure", "réduire les stimuli, silence opérationnel, observation prolongée"]] } ] },
+          { titre: "Interdits absolus", src: "DOREX §6.4", interdits: true, items: [
+            "Couper une structure supposée vivante", "Insérer un instrument sans validation scientifique", "Éclairer agressivement", "Injecter ou pulvériser sans ordre", "Retirer un objet incrusté", "Ouvrir une cavité organique" ] },
+          { titre: "Équipage en zone EXO", src: "DOREX §6.5", items: [
+            "Posture statique ; communication minimale ; lecture des capteurs uniquement ; signalement immédiat de toute modification.",
+            ["Parler dans une zone EXO silencieuse est une erreur critique.", "DOREX A6"] ] } ] },
+        { titre: "Menaces mobiles", src: "DOREX §8", blocs: [
+          { intro: ["Toute entité capable de déplacement autonome, de réaction aux stimuli, de poursuite ou d'évitement, d'attaque ou de défense est classée **ORG ou EXO mobile**.", "DOREX §8.1"] },
+          { titre: "Comportements", src: "DOREX §8.2", cartes: [
+            { titre: "Passif — N1", lignes: [["Indicateurs", "immobilité, réaction lente, aucune agression"], ["Réponse", "surveillance uniquement, maintien du périmètre"]], src: "DOREX §8.2, EOD §2.6" },
+            { titre: "Exploratoire — N1", lignes: [["Indicateurs", "déplacements sans cible, réagit aux sons et à la lumière, teste l'environnement"], ["Réponse", "distance augmentée + drones, moins d'émissions lumineuses et sonores"]], src: "DOREX §8.2, EOD §2.6" },
+            { titre: "Territorial — N2 minimum", lignes: [["Indicateurs", "défense d'une zone, attaques préventives, marquage biologique, protège une structure"], ["Réponse", "**retrait immédiat**, observation indirecte"]], src: "✔ règle de table — DOREX §8.2, EOD §3.7" },
+            { titre: "Prédatoire — N3 minimum", lignes: [["Indicateurs", "poursuite ciblée, attaque dirigée, anticipation, interception, embuscade, action coordonnée"], ["Réponse", "interruption de mission, préparation du confinement, renfort immédiat"]], src: "✔ règle de table — DOREX §8.2" },
+            { titre: "Adaptatif — N4 automatique", lignes: [["Indicateurs", "change de stratégie, apprend des humains, évite les pièges, anticipe les déplacements, imite des comportements humains"], ["Réponse", "statut MENACE NIVEAU 4"]], src: "DOREX §8.5, EOD §5.4" } ],
+            items: [
+              ["Tout changement brutal de comportement → réévaluation immédiate.", "EOD §2.6"],
+              ["Toute capacité de poursuite est un facteur aggravant.", "EOD §3.7"] ] },
+          { titre: "Engagement", src: "DOREX §8.3", items: [
+            "Armes seulement si menace confirmée **et** extraction impossible **et** risque immédiat ; sinon **retrait** (voir Règles d'engagement)." ] },
+          { titre: "Interactions interdites", src: "DOREX §8.4", interdits: true, items: [
+            "Nourrir l'entité", "L'attirer", "Simuler ses comportements", "Tester sa réaction sans autorisation" ] } ] },
+        { titre: "Personnel disparu et silence radio", src: "DOREX §9", blocs: [
+          { gen: "minuteries" },
+          { titre: "Règles", items: [
+            ["**Non-séparation** : aucune recherche seul, sans radio ou sans traceur actif.", "DOREX §9.6"],
+            ["**Disparition en zone EXO / BIO** : zone C2 minimum, drones uniquement, accès secondaires fermés, ventilation réduite ou coupée.", "DOREX §9.7"],
+            ["**Récupération** : formation serrée, couverture visuelle complète, analyse continue des surfaces, pas de séparation, extraction rapide uniquement. **Aucun corps déplacé sans inspection préalable.**", "DOREX §9.10"],
+            ["Recherche et récupération = opération NBC : 3 minimum, radio permanente, drone en tête, couverture mutuelle, vidéo individuelle ; toute perte de contact arrête la progression.", "EOD §3.6"] ] },
+          { titre: "Indices trompeurs", src: "DOREX §9.8, §9.9", items: [
+            "**Ne garantissent pas la survie** : bruits dans les conduits, traces biologiques, mouvements détectés, objets déplacés, signaux radio intermittents. Toute interprétation émotionnelle est interdite.",
+            "**Signal retrouvé** : envisager falsification, comportement non humain, **imitation de communication**, contamination cognitive ou biologique. Aucune réponse directe sans validation." ] },
+          { items: [["**Substitution** : toute équipe disparue est potentiellement **remplacée, imitée ou intégrée** à l'environnement biologique.", "DOREX §9.12"]] } ] },
+        { titre: "Crise et perte de contrôle", src: "DOREX §11, EOD ch. 5–6", blocs: [
+          { gen: "crise" } ] },
+        { titre: "Checklists réflexes A1 à A7", src: "DOREX §12", blocs: [
+          { titre: "A1 — Entrée en zone inconnue", coches: true, items: [
+            "communication active", "caméra opérationnelle", "analyse atmosphérique effectuée", "combinaison scellée", "arme prête (niveau de sécurité validé)", "drone déployé si possible", "itinéraire de sortie défini" ] },
+          { titre: "A2 — Découverte", coches: true, items: [
+            "arrêter tout mouvement", "établir la distance minimale", "observer sans interaction", "scanner l'environnement", "signaler à la chaîne de commandement", "interdire tout contact physique" ] },
+          { titre: "A3 — Contamination suspectée", coches: true, items: [
+            "isoler l'individu", "couper le contact avec l'équipe", "désarmer si nécessaire", "surveiller les signes vitaux", "lancer l'analyse médicale", "interdire le retour en zone commune" ] },
+          { titre: "A4 — Matrice de réaction rapide", items: [
+            "Organisme inconnu immobile → **observation distante**",
+            "Organisme mobile → **recul + drones**",
+            "Fluide inconnu → **isolement de la zone**",
+            "Disparition d'équipe → **procédure personnel disparu**",
+            "Symptômes multiples → **quarantaine**",
+            "Rupture de communication → **alerte progressive**" ] },
+          { titre: "A5 — Priorités en intervention", ordre: true, items: [
+            "Sécurité du bâtiment / vaisseau", "Confinement biologique", "Protection des équipes restantes", "Récupération du matériel", "Sauvetage individuel" ] },
+          { titre: "A6 — Erreurs critiques récurrentes", interdits: true, items: [
+            "Supposer un organisme mort", "Retirer un masque trop tôt", "Entrer seul en zone inconnue", "Séparer une équipe pour enquêter", "Ignorer un symptôme léger", "Toucher sans analyse", "Parler dans une zone EXO silencieuse", "Ouvrir un conteneur non validé" ] },
+          { titre: "A7 — Rappel final", items: [
+            "**Ce qui n'est pas compris est dangereux. Ce qui est silencieux est surveillé. Ce qui est vivant est contenu.**" ] } ] }
+      ] }
+    ],
+
+    /* Compléments des fiches de niveau (le reste vient de DOREX_DATA.niveaux).
+       remplaceNotes : les notes courtes du niveau sont remplacées par les compléments détaillés. */
+    fiches: [
+      { mission: "Recueillir un maximum d'informations sans modifier l'environnement observé.",
+        declencheurs: { src: "EOD §1.1", items: [
+          "signature thermique anormale", "mouvement détecté hors identification", "masse organique non répertoriée", "émission biologique inexpliquée",
+          "structure d'origine inconnue", "modification inhabituelle de l'environnement", "lecture incohérente des capteurs" ],
+          note: "Sans confirmation, toute anomalie est potentiellement exobiologique." },
+        complements: [
+          { titre: "Observation", src: "EOD §1.3", items: ["Établir : nature, localisation précise, dimensions, mobilité, évolution dans le temps, influence sur l'environnement."] } ] },
+      { mission: "Garder la maîtrise, établir un périmètre, recueillir le renseignement.",
+        declencheurs: { src: "EOD §2.1", items: [
+          "observation visuelle d'une entité inconnue", "identification d'une structure biologique ou exobiologique", "mouvement autonome confirmé",
+          "confirmation simultanée par plusieurs capteurs", "activité incompatible avec l'environnement connu" ] },
+        complements: [
+          { titre: "Reconnaissance", src: "EOD §2.3", items: ["Sans exposition du personnel. Moyens téléopérés prioritaires : drones terrestres ou aériens, optique longue portée, imagerie thermique, analyse atmosphérique à distance, télémétrie laser ou radar."] },
+          { titre: "Grille d'évaluation de la menace", src: "EOD §2.4", items: [
+            "**A. Structure** — dimensions, composition apparente, stabilité, évolution visible",
+            "**B. Mobilité** — immobile, déplacement lent, déplacement autonome, trajectoire identifiable",
+            "**C. Réactivité** — aucune, lumière, bruit, chaleur, présence humaine",
+            "**D. Environnement** — autres structures, traces biologiques, terrain modifié, anomalies atmosphériques" ],
+            note: "Toute modification est signalée immédiatement." },
+          { titre: "Entité passive", src: "EOD §2.6", items: ["Immobilité, pas de réaction, déplacements limités → poursuivre l'observation, maintenir le périmètre."] } ] },
+      { mission: "Couper toute propagation, identifier les exposés, préserver la capacité de l'unité.",
+        declencheurs: { src: "EOD §3.1", items: [
+          "pénétration dans une zone potentiellement contaminée", "exposition atmosphérique ou inhalation suspectée", "contact avec un fluide, résidu ou matière organique inconnue",
+          "ouverture volontaire ou accidentelle d'une structure biologique", "perte d'intégrité d'un équipement NBC", "récupération d'un objet ou échantillon non sécurisé" ],
+          note: ["Blessure en environnement EXO : elle mène directement au niveau 3.", "✔ règle de table — DOREX §4.3"] },
+        complements: [
+          { titre: "Protection", src: "EOD §3.3", items: [
+            "NBC complet obligatoire pour toute intervention : protection respiratoire intégrale, combinaison étanche, protection oculaire, gants et surbottes, contrôle d'étanchéité avant engagement.",
+            ["Interdiction de manipulation humaine.", "DOREX §2.3"] ] },
+          { titre: "Personnels exposés", src: "EOD §3.4", intro: "Statut EXPOSÉ / Sujet EXO :", items: [
+            "retrait des armes et équipements sensibles", "isolement physique", "surveillance biométrique permanente", "enregistrement vidéo continu", "aucun contact non protégé" ],
+            note: "Statut opérationnel conservé uniquement sur décision médicale." },
+          { titre: "Évaluation tactique", src: "EOD §3.7", items: [
+            ["**Territorial** (défend une zone, réagit à l'approche, protège une structure) → repli immédiat, distance, observation indirecte. Niveau 2 minimum.", "✔ règle de table"],
+            ["**Prédateur** (poursuite ciblée, interception, embuscade, action coordonnée) → interruption de mission, préparation du confinement, renfort immédiat. Niveau 3 minimum.", "✔ règle de table"],
+            "Toute capacité de poursuite est un facteur aggravant." ] } ] },
+      { mission: "Contenir, isoler les zones compromises, empêcher toute dissémination inter-sectorielle.",
+        declencheurs: { src: "EOD §4.1", items: [
+          "contamination présumée d'un ou plusieurs opérateurs", "disparition inexpliquée en zone EXO", "symptômes multiples compatibles",
+          "rupture ou défaillance du confinement local", "suspicion de propagation biologique", "incohérence critique des rapports d'équipe", "comportement anormal d'un sujet exposé" ],
+          note: ["Aussi : situation de N2 non résolue → N3 après validation du commandement ; blessure ouverte en zone inconnue ; comportement prédatoire.", "EOD §4.1, DOREX §4.3, §8.2"] },
+        complements: [
+          { titre: "Confinement", src: "EOD §4.3", items: ["Isolement physique du secteur ; fermeture étanche des accès ; contrôle des flux atmosphériques ; quarantaine du périmètre élargi ; marquage d'alerte renforcé."] },
+          { titre: "Symptômes compatibles", src: "EOD §4.4", items: ["fièvre inexpliquée, lésions cutanées, hallucinations ou confusion, agressivité soudaine, troubles cognitifs, comportement obsessionnel, perte de reconnaissance de l'environnement ou de l'équipage"] },
+          { titre: "Personnel disparu", src: "EOD §4.5", items: ["Toute disparition en zone EXO ou contaminée = incident biologique. Pas d'engagement humain non protégé. Les signaux intermittents ne prouvent pas la survie."] },
+          { titre: "Évaluation de la propagation", src: "EOD §4.7", items: [
+            "Cartographie immédiate ; analyse des vecteurs (air, surface, contact) ; identification des points de rupture ; verrouillage progressif des secteurs adjacents.",
+            "**Propagation confirmée → niveau 4 automatique.**" ] } ] },
+      { mission: "Contenir et empêcher toute extension hors du périmètre critique.",
+        declencheurs: { src: "EOD §5.1", items: [
+          "contamination active confirmée", "propagation incontrôlée d'un agent biologique", "rupture totale du confinement sectoriel",
+          "disparition multiple en zone EXO ou contaminée", "adaptation comportementale d'une entité", "incapacité à rétablir un contrôle local",
+          "défaillance simultanée des protocoles de confinement" ],
+          note: ["Aussi : situation de N3 hors contrôle → N4 après validation du commandement ; propagation confirmée → automatique ; CRISE MAJEURE → automatique.", "EOD §4.7, §5.1, DOREX §11.1"] },
+        complements: [
+          { titre: "Neutralisation autorisée — sur ordre du commandement ou de l'IA de bord", src: "EOD §5.3", items: [
+            "neutralisation ciblée d'une menace biologique", "destruction partielle ou totale d'un compartiment", "dépressurisation contrôlée d'un secteur",
+            "scellement permanent d'une zone compromise", "sacrifice d'un périmètre pour contenir la propagation" ],
+            note: "Toute neutralisation est une mesure de confinement structurel." } ] },
+      { mission: "Survie structurelle et prévention de toute dissémination hors site.", remplaceNotes: true,
+        declencheurs: { src: "EOD §6.1", items: [
+          "propagation incontrôlée multi-sectorielle", "impossibilité de confinement local ou global", "effondrement simultané des systèmes de sécurité",
+          "perte de contrôle de plusieurs zones critiques", "rupture des communications internes majeures", "menace directe sur l'intégrité structurelle",
+          "comportement biologique rendant toute intervention impossible" ],
+          note: "**N4 non contenu → N5 automatiquement**, sans validation." },
+        complements: [
+          { titre: "Bunkerisation (si évacuation impossible)", src: "EOD §6.3", ordre: true, items: [
+            "Repli vers les zones sécurisées préétablies", "Scellement hermétique des accès", "Énergie réduite au minimum vital",
+            "Extinction des signaux non essentiels", "Silence opérationnel total", "Surveillance passive des secteurs critiques" ] },
+          { titre: "Sacrifice de zone", src: "EOD §6.4", items: [
+            "Ordonné **uniquement par le commandement ou l'IA de bord** : dépressurisation contrôlée, verrouillage permanent, destruction partielle ou totale, abandon définitif. Zone sacrifiée = perdue à jamais." ] },
+          { titre: "Autodestruction (dernier recours)", src: "EOD §6.5", intro: "Les **trois** conditions réunies simultanément :", ordre: true, items: [
+            "impossibilité totale de confinement global", "risque avéré de dissémination hors site", "absence de solution de neutralisation fonctionnelle" ] },
+          { titre: "Survie collective — allocation des ressources", src: "EOD §6.6", ordre: true, items: [
+            "confinement global", "zones intactes", "personnel non exposé", "équipes opérationnelles restantes" ] } ] }
+    ],
+
+    /* Personnel disparu : minuteries (affiché dans Matrice et dans Procédures) */
+    minuteries: { titre: "Personnel disparu — minuteries", src: "DOREX §9",
+      intro: ["Est **disparu** (une condition suffit) : silence radio de plus de 5 min, perte du signal de localisation, pas de réponse aux appels standardisés, disparition visuelle confirmée, incohérence des rapports d'équipe. Le silence n'est jamais neutre.", "DOREX §9.1, §9.2"],
+      cartes: [
+        { titre: "0–10 min — Silence radio", lignes: [["Actions", "1. relancer la communication standardisée ; 2. canaux secondaires ; 3. recouper avec l'équipe ; 4. journaux automatiques / IA"], ["Interdit", "**aucune intervention physique**"]], src: "DOREX §9.3" },
+        { titre: "10–20 min — Perte de contact", lignes: [["Actions", "1. dernier signal connu ; 2. drone de reconnaissance ; 3. analyse environnementale à distance ; 4. vérification thermique et biologique"], ["Interdit", "entrée humaine non protégée, séparation des équipes, aucune récupération"]], src: "DOREX §9.4, EOD §2.7" },
+        { titre: "20–60 min — DISPARUE PROBABLE", lignes: [["Actions", "équipe de récupération de **3 minimum**, NBC complet, armement standard, enregistrement continu"], ["Objectif", "constater sans exposition supplémentaire"]], src: "DOREX §9.5" },
+        { titre: "Aucune trace — DISPARITION EXO PROBABLE", lignes: [["Effet", "**niveau +1**, surveillance d'au moins 24 h, aucun retour non escorté"]], src: "DOREX §9.11" },
+        { titre: "Traces retrouvées après 60 min", lignes: [["Traces humaines saines, validées par analyse", "la récupération continue au niveau actuel"], ["Traces inconnues ou EXO", "mêmes effets que l'absence de trace : DISPARITION EXO PROBABLE, niveau +1, surveillance d'au moins 24 h, aucun retour non escorté"]], src: "✔ règle de table — DOREX §9.11" } ],
+      note: ["Niveau : disparition dans la zone → N2 ; en zone EXO / BIO → N3 et zone C2 minimum ; disparition multiple → N4 ; disparition simultanée de plusieurs membres = CRISE MAJEURE → N4.", "EOD §2.8, §4.1, §4.5, §5.1, DOREX §9.7, §11.1"] }
+  }
+};
+
+/* =====================================================================
+   LOGIQUE
+   ===================================================================== */
+const CLE = "dorex-app-v1";
+const NIV = DOREX_DATA.niveaux;
+const EV = Object.fromEntries(DOREX_DATA.evenements.map(e => [e.id, e]));
+const ZC = DOREX_DATA.zones;
+const ESC = DOREX_DATA.escouade;
+const SANTE = Object.fromEntries(ESC.sante.map(s => [s.id, s]));
+const STATUTS = Object.fromEntries(ESC.statuts.map(s => [s.id, s]));
+const PARTIE = Object.fromEntries(ESC.corps.map(p => [p.id, p]));
+/* Catégories du journal, et catégorie par défaut de chaque type d'entrée */
+const CATS = { dorex: "DOREX", escouade: "Escouade", autre: "Autre" };
+const CAT_TYPE = { niveau: "dorex", refus: "dorex", evenement: "dorex", zone: "dorex", mesure: "dorex", marine: "escouade", note: "autre", systeme: "autre" };
+function catDe(type) { return CAT_TYPE[type] || "autre"; }
+
+function etatVide(reglages) {
+  return {
+    v: 1, niveau: 0, events: {}, zones: [], mesures: {}, journal: [], refus: null, marines: [],
+    reglages: Object.assign({ escouade: "", theme: "vert", scan: true }, reglages || {})
+  };
+}
+let S = etatVide();
+
+function charger() {
+  try {
+    const brut = localStorage.getItem(CLE);
+    if (brut) S = normaliser(JSON.parse(brut));
+  } catch (e) { /* stockage indisponible : on part d'un état vide */ }
+}
+function sauver() {
+  try { localStorage.setItem(CLE, JSON.stringify(S)); } catch (e) { /* ignoré */ }
+}
+function normaliser(o) {
+  const s = etatVide(o && o.reglages);
+  if (!o || typeof o !== "object") return s;
+  const n = Number(o.niveau);
+  s.niveau = Number.isInteger(n) && n >= 0 && n <= 5 ? n : 0;
+  if (o.events && typeof o.events === "object") {
+    for (const [id, v] of Object.entries(o.events)) if (EV[id] && v && v.on) s.events[id] = { on: true, t: v.t || null, base: Number.isInteger(v.base) ? v.base : 0 };
+  }
+  if (Array.isArray(o.zones)) s.zones = o.zones.filter(z => z && typeof z.nom === "string").map(z => ({ id: String(z.id || uid()), nom: z.nom, c: Math.min(4, Math.max(0, Number(z.c) || 0)), t: z.t || null }));
+  if (o.mesures && typeof o.mesures === "object") s.mesures = o.mesures;
+  // Anciennes entrées sans catégorie : déduite du type
+  if (Array.isArray(o.journal)) s.journal = o.journal.filter(j => j && j.txt).slice(-2000).map(j => Object.assign({}, j, { cat: CATS[j.cat] ? j.cat : catDe(j.type) }));
+  s.refus = Number.isInteger(o.refus) ? o.refus : null;
+  // Anciennes sauvegardes : pas de marines → tableau vide
+  if (Array.isArray(o.marines)) {
+    const ids = new Set();
+    s.marines = o.marines.filter(m => m && typeof m === "object").slice(0, 40).map(normMarine)
+      .filter(m => !ids.has(m.id) && ids.add(m.id));
+  }
+  return s;
+}
+/* Fiche marine validée : textes tronqués, stress entier 0–10, statut / santé pris dans les listes,
+   compteurs d'équipement entiers ≥ 0, blessures seulement pour les 6 parties connues (note vide = pas de blessure). */
+function normMarine(m) {
+  m = m || {};
+  const txt = (v, max) => typeof v === "string" ? v.slice(0, max) : "";
+  const st = Number(m.stress);
+  const bl = {};
+  if (m.blessures && typeof m.blessures === "object") for (const p of ESC.corps) { const v = txt(m.blessures[p.id], 300).trim(); if (v) bl[p.id] = v; }
+  return {
+    id: String(m.id || uid()), nom: txt(m.nom, 60), pseudo: txt(m.pseudo, 40), matricule: txt(m.matricule, 30), classe: txt(m.classe, 60),
+    stress: Number.isInteger(st) ? Math.min(10, Math.max(0, st)) : 0,
+    statut: STATUTS[m.statut] ? m.statut : "aucun",
+    sante: SANTE[m.sante] ? m.sante : "bon",
+    equip: Array.isArray(m.equip) ? m.equip.filter(q => q && typeof q === "object").slice(0, 60)
+      .map(q => ({ id: String(q.id || uid()), lib: txt(q.lib, 80), n: Math.min(99999, Math.max(0, Math.floor(Number(q.n)) || 0)) })) : [],
+    blessures: bl
+  };
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+/* ---------- Calcul du niveau requis ----------
+   Niveau requis = max de tous les déclencheurs actifs :
+   - événement coché à niveau fixe → son niveau minimal ;
+   - événement « niveau +1 » → (niveau de base mémorisé au moment où il est coché) + 1, plafonné à 5.
+     Base = max(niveau actif, niveau requis par les autres déclencheurs) à cet instant.
+   - zone Cx → niveau minimal de la zone (C1→2, C2→3, C3→4, C4→4) ;
+   - 2 zones C4 ou plus → 5.
+   Retourne { niveau, sources:[{lib, niveau, mode, src, type}] }. */
+function niveauEvent(id, st) {
+  const e = EV[id], v = st.events[id];
+  if (!e || !v || !v.on) return null;
+  if (e.rel) return Math.min(5, (v.base || 0) + 1);
+  return e.niveau;
+}
+function requis(st, exclureId) {
+  st = st || S;
+  const sources = [];
+  for (const id of Object.keys(st.events)) {
+    if (id === exclureId) continue;
+    const n = niveauEvent(id, st);
+    if (n === null || n === undefined) continue;
+    const e = EV[id];
+    sources.push({ type: "ev", id, lib: e.lib, niveau: n, mode: e.mode, src: e.src, rel: !!e.rel });
+  }
+  let nbC4 = 0;
+  for (const z of st.zones) {
+    if (z.c === 4) nbC4++;
+    const zc = ZC[z.c];
+    if (zc.niveauMin > 0) sources.push({ type: "zone", id: z.id, lib: "Zone « " + z.nom + " » en C" + z.c, niveau: zc.niveauMin, mode: "immediat", src: "✔ règle de table — correspondance zone / niveau" });
+  }
+  const m = DOREX_DATA.zonesC4Multiples;
+  if (nbC4 >= m.seuil) sources.push({ type: "zone", id: "c4multi", lib: nbC4 + " zones en C4 (perte de contrôle de plusieurs zones critiques)", niveau: m.niveauMin, mode: "immediat", src: m.src });
+  sources.sort((a, b) => b.niveau - a.niveau);
+  const niveau = sources.length ? sources[0].niveau : 0;
+  return { niveau, sources };
+}
+
+/* Validation du commandement requise pour atteindre `cible` depuis `actif` ?
+   Oui si le niveau cible n'est imposé que par des déclencheurs en mode « validation ». */
+function analysePassage(r, actif) {
+  const au = r.sources.filter(s => s.niveau > actif);
+  const maxLibre = Math.max(-1, ...au.filter(s => s.mode !== "validation").map(s => s.niveau));
+  const validation = r.niveau > maxLibre;
+  const auto = au.some(s => s.niveau === r.niveau && s.mode === "auto");
+  return { au, validation, auto, maxLibre };
+}
+
+/* ---------- Journal ---------- */
+/* cat : "dorex", "escouade" ou "autre" ; par défaut déduite du type (CAT_TYPE). Retourne l'entrée. */
+function journal(type, txt, cat) {
+  const j = { t: new Date().toISOString(), type, cat: CATS[cat] ? cat : catDe(type), txt };
+  S.journal.push(j);
+  return j;
+}
+function nomNiv(n) { return "N" + n + " " + NIV[n].nom; }
+
+/* ---------- Changement de niveau ---------- */
+function setNiveau(n, mode, detail) {
+  const avant = S.niveau;
+  if (n === avant) return;
+  S.niveau = n;
+  const libMode = { auto: "automatique", confirme: "confirmé", manuel: "manuel", valide: "validé par le commandement" }[mode] || mode;
+  journal("niveau", "Niveau " + avant + " → " + n + " (" + NIV[n].nom + ") — " + libMode + (detail ? " : " + detail : ""));
+  if (n >= requis().niveau) S.refus = null;
+}
+
+/* Appelée après toute modification des déclencheurs.
+   avant = résultat de requis() avant la modification. */
+function apresChangement(avant) {
+  const apres = requis();
+  // Redescente automatique : le niveau actif était couvert par les déclencheurs d'avant,
+  // et ce qui reste actif impose moins → on descend au maximum restant.
+  if (apres.niveau < avant.niveau && S.niveau <= avant.niveau && S.niveau > apres.niveau) {
+    setNiveau(apres.niveau, "auto", "plus aucun déclencheur actif n'impose le niveau " + (apres.niveau + 1) + " ou plus");
+  }
+  if (apres.niveau <= S.niveau) S.refus = null;
+  sauver();
+  rendre();
+  // Proposition de montée : le niveau requis dépasse le niveau actif ET, soit il a augmenté,
+  // soit un nouveau déclencheur au-dessus du niveau actif vient d'apparaître
+  // (ex. déclencheur automatique au même niveau qu'un passage déjà refusé).
+  const cle = s => s.type + ":" + s.id + ":" + s.niveau;
+  const deja = new Set(avant.sources.map(cle));
+  const nouveau = apres.sources.some(s => s.niveau > S.niveau && !deja.has(cle(s)));
+  if (apres.niveau > S.niveau && (apres.niveau > avant.niveau || nouveau)) proposerMontee(apres);
+}
+
+function proposerMontee(r) {
+  const a = analysePassage(r, S.niveau);
+  const cible = r.niveau;
+  const lignes = a.au.map(s => `<li>${badgeNiv(s.niveau, s.rel)} ${esc(s.lib)} ${modeBadge(s.mode)} <span class="src">${esc(s.src)}</span></li>`).join("");
+  let regle;
+  if (a.validation) regle = `<p class="b-val"><b>⚠ VALIDATION DU COMMANDEMENT REQUISE</b> pour passer en niveau ${cible} <span class="src">(EOD §4.1, §5.1)</span>.</p>`;
+  else if (a.auto) regle = `<p><b>Passage automatique</b> selon la doctrine, sans validation du commandement <span class="src">(EOD §4.7, §6.1, DOREX §11.1)</span>.</p>`;
+  else regle = `<p><b>Passage immédiat sur critère.</b> Le doute suffit <span class="src">(EOD §2.8)</span>.</p>`;
+  if (a.validation && a.maxLibre > S.niveau) regle += `<p>Sans cette validation, les autres déclencheurs imposent au moins le niveau ${a.maxLibre}.</p>`;
+  const boutons = [
+    { lib: a.validation ? "Validé : passer en N" + cible : "Passer en N" + cible, cls: "pri", act: () => { setNiveau(cible, a.validation ? "valide" : "confirme"); sauver(); rendre(); } }
+  ];
+  if (a.validation && a.maxLibre > S.niveau) {
+    const nl = a.maxLibre;
+    boutons.push({ lib: "Non validé : passer en N" + nl, cls: "", act: () => {
+      setNiveau(nl, "confirme", "validation du commandement refusée pour le niveau " + cible);
+      S.refus = cible; journal("refus", "Passage au niveau " + cible + " non validé — niveau requis supérieur au niveau actif"); sauver(); rendre(); } });
+  }
+  boutons.push({ lib: "Refuser", cls: "dang", act: () => {
+    S.refus = cible; journal("refus", "Passage au niveau " + cible + " refusé (niveau actif " + S.niveau + ")"); sauver(); rendre(); } });
+  modale({
+    titre: "Niveau requis : " + cible + " — " + NIV[cible].nom,
+    couleur: couleurNiv(cible),
+    html: `<p>Niveau actif : <b>${nomNiv(S.niveau)}</b></p>
+      <h3>Déclencheurs au-dessus du niveau actif</h3><ul class="plain">${lignes}</ul>
+      ${regle}
+      <div class="annonce">« ${esc(annonce(cible))} »</div>`,
+    boutons
+  });
+}
+
+/* ---------- Actions utilisateur ---------- */
+function basculerEvent(id, on) {
+  const avant = requis();
+  const e = EV[id];
+  if (on) {
+    const base = Math.max(S.niveau, requis(S, id).niveau);
+    S.events[id] = { on: true, t: new Date().toISOString(), base };
+    const n = niveauEvent(id, S);
+    journal("evenement", "☑ " + e.lib + (n !== null ? " [niveau " + (e.rel ? "+1 → " : "min ") + n + "]" : "") + (e.statut ? " — statut " + e.statut : ""));
+  } else {
+    delete S.events[id];
+    journal("evenement", "☐ Décoché : " + e.lib);
+  }
+  apresChangement(avant);
+}
+function ajouterZone(nom, c) {
+  const avant = requis();
+  nom = (nom || "").trim() || "Secteur " + (S.zones.length + 1);
+  S.zones.push({ id: uid(), nom, c, t: new Date().toISOString() });
+  journal("zone", "Zone créée : « " + nom + " » en C" + c + " (" + ZC[c].nom + ")");
+  apresChangement(avant);
+}
+function classerZone(id, c) {
+  const z = S.zones.find(z => z.id === id); if (!z || z.c === c) return;
+  const avant = requis();
+  journal("zone", "Zone « " + z.nom + " » : C" + z.c + " → C" + c + " (" + ZC[c].nom + ")");
+  z.c = c;
+  apresChangement(avant);
+}
+function renommerZone(id, nom) {
+  const z = S.zones.find(z => z.id === id); nom = (nom || "").trim();
+  if (!z || !nom || nom === z.nom) return;
+  journal("zone", "Zone « " + z.nom + " » renommée « " + nom + " »");
+  z.nom = nom; sauver(); rendre();
+}
+function supprimerZone(id) {
+  const z = S.zones.find(z => z.id === id); if (!z) return;
+  modale({ titre: "Supprimer la zone ?", html: `<p>« ${esc(z.nom)} » (C${z.c}) sera retirée. Si elle imposait le niveau actif, le niveau redescendra automatiquement.</p>`,
+    boutons: [{ lib: "Supprimer", cls: "dang", act: () => {
+      const avant = requis();
+      S.zones = S.zones.filter(x => x.id !== id);
+      journal("zone", "Zone supprimée : « " + z.nom + " » (C" + z.c + ")");
+      apresChangement(avant);
+    } }, { lib: "Annuler" }] });
+}
+function cocherMesure(n, i, on) {
+  const l = S.mesures[n] || (S.mesures[n] = []);
+  l[i] = on;
+  const txt = NIV[n].mesures.items[i].replace("« {ANNONCE} »", "annonce");
+  journal("mesure", (on ? "☑ " : "☐ ") + "Mesure N" + n + " : " + txt);
+  sauver(); rendre();
+}
+
+function changerNiveauManuel(sens) {
+  const choix = [];
+  for (let n = 0; n <= 5; n++) if (sens < 0 ? n < S.niveau : n > S.niveau) choix.push(n);
+  if (!choix.length) return;
+  modale({
+    titre: sens < 0 ? "Baisser le niveau" : "Monter le niveau",
+    html: `<p>Niveau actif : <b>${nomNiv(S.niveau)}</b>. Choisir le nouveau niveau :</p>
+      <div class="choix-niv">${choix.map(n => `<button data-choix="${n}" class="b-n${n}"><b>${n}</b>${esc(NIV[n].nom)}</button>`).join("")}</div>`,
+    boutons: [{ lib: "Annuler" }],
+    apres: (corps) => corps.querySelectorAll("[data-choix]").forEach(b => b.addEventListener("click", () => { fermerModale(); confirmerManuel(Number(b.dataset.choix)); }))
+  });
+}
+function confirmerManuel(n) {
+  const r = requis();
+  const bloquants = r.sources.filter(s => s.niveau > n);
+  const baisse = n < S.niveau;
+  let html = `<p>Passage manuel <b>${nomNiv(S.niveau)}</b> → <b>${nomNiv(n)}</b>.</p>`;
+  if (baisse) {
+    html += `<p class="src">Les sources ne prévoient aucune désescalade (✔ règle de table : volonté de l'auteur). Une zone contaminée reste fermée jusqu'à validation complète de la neutralisation biologique (DOREX §7.1) ; la disparition des symptômes n'est pas une amélioration (DOREX §10.9).</p>`;
+    if (bloquants.length) html += `<h3 class="b-val">⚠ Encore actifs, imposent plus que N${n}</h3><ul class="plain">${bloquants.map(s => `<li>${badgeNiv(s.niveau, s.rel)} ${esc(s.lib)}</li>`).join("")}</ul><p>Le niveau requis restera supérieur au niveau actif (avertissement affiché).</p>`;
+    else html += `<p>Aucun déclencheur actif n'impose plus que N${n}.</p>`;
+  }
+  html += `<div class="annonce">« ${esc(annonce(n))} »</div>`;
+  modale({ titre: "Confirmer : niveau " + n, couleur: couleurNiv(n), html,
+    boutons: [{ lib: (baisse ? "Baisser" : "Monter") + " en N" + n, cls: baisse ? "dang" : "pri", act: () => {
+      setNiveau(n, "manuel", bloquants.length ? bloquants.length + " déclencheur(s) actif(s) imposent plus" : "");
+      if (bloquants.length) S.refus = r.niveau;
+      sauver(); rendre();
+    } }, { lib: "Annuler" }] });
+}
+
+/* ---------- Escouade : actions ----------
+   Journalisés (catégorie escouade) : ajout / retrait, état de santé, statut DOREX, stress, blessures.
+   Identité et équipement : mis à jour dans S à chaque frappe, sans journal ni re-rendu (pas de perte de focus). */
+function marine(id) { return S.marines.find(m => m.id === id); }
+function nomMarine(m) { return m.pseudo.trim() || m.nom.trim() || m.matricule.trim() || "Marine sans nom"; }
+function majEscouade() { sauver(); rendreEscouade(); rendreJournal(); }
+
+function ajouterMarine() {
+  const m = normMarine({ id: uid() });
+  S.marines.push(m);
+  mOuverts.add(m.id);
+  journal("marine", "Marine ajouté à l'escouade (fiche " + S.marines.length + ")");
+  majEscouade();
+  const n = mNoeuds.get(m.id);
+  if (n) { n.scrollIntoView({ block: "start" }); n.querySelector('[data-f="nom"]').focus({ preventScroll: true }); }
+}
+function supprimerMarine(id) {
+  const m = marine(id); if (!m) return;
+  modale({ titre: "Retirer ce marine ?", couleur: "var(--red)", html: `<p>« ${esc(nomMarine(m))} » sera retiré de l'escouade, avec sa fiche (équipement, blessures).</p>`,
+    boutons: [{ lib: "Retirer", cls: "dang", act: () => {
+      S.marines = S.marines.filter(x => x.id !== id);
+      mOuverts.delete(id);
+      journal("marine", "Marine retiré de l'escouade : " + nomMarine(m));
+      majEscouade();
+    } }, { lib: "Annuler" }] });
+}
+function changerSante(id, v) {
+  const m = marine(id); if (!m || !SANTE[v] || m.sante === v) return;
+  journal("marine", nomMarine(m) + " : état de santé " + SANTE[m.sante].lib + " → " + SANTE[v].lib);
+  m.sante = v; majEscouade();
+}
+function changerStatut(id, v) {
+  const m = marine(id); if (!m || !STATUTS[v] || m.statut === v) return;
+  journal("marine", nomMarine(m) + " : statut DOREX " + STATUTS[m.statut].lib + " → " + STATUTS[v].lib);
+  m.statut = v; majEscouade();
+}
+/* Stress : les appuis successifs sur − / + en moins d'une minute sont regroupés dans une seule entrée
+   (« 2 → 5 ») tant qu'aucune autre entrée n'a été écrite entre-temps ; retour à la valeur de départ = entrée retirée. */
+function changerStress(id, d) {
+  const m = marine(id); if (!m) return;
+  const n = Math.min(10, Math.max(0, m.stress + d));
+  if (n === m.stress) return;
+  const der = S.journal[S.journal.length - 1];
+  if (der && der.type === "marine" && der.mid === id && der.stressDe !== undefined && Date.now() - Date.parse(der.t) < 60000) {
+    if (der.stressDe === n) S.journal.pop();
+    else { der.txt = nomMarine(m) + " : stress " + der.stressDe + " → " + n; der.t = new Date().toISOString(); }
+  } else {
+    const j = journal("marine", nomMarine(m) + " : stress " + m.stress + " → " + n);
+    j.mid = id; j.stressDe = m.stress;
+  }
+  m.stress = n; majEscouade();
+}
+function saisirBlessure(id, part) {
+  const m = marine(id), p = PARTIE[part]; if (!m || !p) return;
+  const actuel = m.blessures[part] || "";
+  let val = actuel;  // lu au fil de la frappe : la modale est vidée avant l'exécution du bouton
+  const boutons = [{ lib: "Enregistrer", cls: "pri", act: () => poserBlessure(id, part, val) }];
+  if (actuel) boutons.push({ lib: "Effacer la blessure", cls: "dang", act: () => poserBlessure(id, part, "") });
+  boutons.push({ lib: "Annuler" });
+  modale({ titre: "Blessure — " + p.lib, couleur: "var(--red)", boutons,
+    html: `<p>${esc(nomMarine(m))}. Note vide = pas de blessure.</p>
+      <textarea id="blTxt" rows="3" maxlength="300" placeholder="Ex. : plaie par balle, brûlure acide, fracture…">${esc(actuel)}</textarea>`,
+    apres: c => {
+      const t = c.querySelector("#blTxt");
+      t.addEventListener("input", () => { val = t.value; });
+      t.focus({ preventScroll: true }); t.setSelectionRange(t.value.length, t.value.length);
+    } });
+}
+function poserBlessure(id, part, txt) {
+  const m = marine(id); if (!m) return;
+  txt = (txt || "").trim().slice(0, 300);
+  const avant = m.blessures[part] || "";
+  if (txt === avant) return;
+  const lib = PARTIE[part].lib;
+  if (!txt) { delete m.blessures[part]; journal("marine", nomMarine(m) + " : blessure effacée (" + lib + ")"); }
+  else { m.blessures[part] = txt; journal("marine", nomMarine(m) + " : blessure " + (avant ? "modifiée " : "") + "— " + lib + " : " + txt); }
+  majEscouade();
+}
+function ajouterEquipement(id) {
+  const m = marine(id); if (!m) return;
+  const q = { id: uid(), lib: "", n: 0 };
+  m.equip.push(q); sauver(); rendreEscouade();
+  const c = mNoeuds.get(id).querySelector(`[data-f="eq-${q.id}"]`); if (c) c.focus();
+}
+function compterEquipement(id, qid, d) {
+  const m = marine(id), q = m && m.equip.find(x => x.id === qid); if (!q) return;
+  q.n = Math.min(99999, Math.max(0, q.n + d)); sauver(); rendreEscouade();
+}
+function supprimerEquipement(id, qid) {
+  const m = marine(id); if (!m) return;
+  m.equip = m.equip.filter(x => x.id !== qid); sauver(); rendreEscouade();
+}
+/* Frappe dans un champ d'identité : S mis à jour, résumé de la fiche rafraîchi sans re-rendu */
+function saisirChampMarine(t) {
+  const m = marine(t.dataset.mid), k = t.dataset.mchamp; if (!m || !(k in m)) return;
+  m[k] = t.value.slice(0, Number(t.maxLength) > 0 ? t.maxLength : 60);
+  sauver();
+  const n = mNoeuds.get(m.id); if (!n) return;
+  n.querySelector(".m-nom").textContent = nomMarine(m);
+  n.querySelector(".m-cl").textContent = m.classe || "classe non renseignée";
+}
+function saisirEquipement(t, fin) {
+  const m = marine(t.dataset.mid), q = m && m.equip.find(x => x.id === t.dataset.eq); if (!q) return;
+  if (t.dataset.eqchamp === "lib") q.lib = t.value.slice(0, 80);
+  else {
+    const n = Math.floor(Number(t.value));
+    if (t.value !== "" && Number.isFinite(n)) q.n = Math.min(99999, Math.max(0, n));
+    if (fin) t.value = q.n;  // à la sortie du champ : affiche la valeur retenue
+  }
+  sauver();
+}
+function actionMarine(b) {
+  const d = b.dataset, id = d.mid;
+  if (d.msante) return changerSante(id, d.msante);
+  if (d.mstress) return changerStress(id, Number(d.mstress));
+  if (d.mbless) return saisirBlessure(id, d.mbless);
+  if (d.eqd) return compterEquipement(id, d.eq, Number(d.eqd));
+  if (d.eqsup) return supprimerEquipement(id, d.eq);
+  if (d.eqajout) return ajouterEquipement(id);
+  if (d.msup) return supprimerMarine(id);
+}
+
+/* ---------- Utilitaires d'affichage ---------- */
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function annonce(n) {
+  const x = (S.reglages.escouade || "").trim() || "X";
+  return DOREX_DATA.annonce.texte.replace("{X}", x).replace("{Y}", n);
+}
+function couleurNiv(n) { return n >= 4 ? "var(--red)" : n === 3 ? "var(--orange)" : n === 2 ? "var(--amber)" : "var(--fg)"; }
+function badgeNiv(n, rel) { return `<span class="badge b-n${n}">${rel ? "+1 → " : ""}N${n}</span>`; }
+function modeBadge(m) {
+  if (m === "auto") return `<span class="badge b-n4">AUTO</span>`;
+  if (m === "validation") return `<span class="badge b-val">VALIDATION CDT</span>`;
+  return "";
+}
+function heure(iso) {
+  const d = new Date(iso), auj = new Date();
+  const h = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return d.toDateString() === auj.toDateString() ? h : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }) + " " + h;
+}
+function statutsActifs() {
+  const s = new Map();
+  for (const id of Object.keys(S.events)) { const e = EV[id]; if (e.statut && !s.has(e.statut)) s.set(e.statut, e.src); }
+  return [...s];
+}
+
+/* ---------- Rendu ---------- */
+function rendre() {
+  document.body.dataset.niv = S.niveau;
+  document.body.classList.toggle("ambre", S.reglages.theme === "ambre");
+  document.body.classList.toggle("scan", !!S.reglages.scan);
+  const L = NIV[S.niveau];
+  $("#bNum").textContent = S.niveau;
+  $("#bNom").textContent = L.nom;
+  $("#bSub").innerHTML = `ROE <b>${L.roe.n} ${esc(L.roe.nom)}</b> · Zone <b>${esc(L.zone.split(" — ")[0])}</b>`;
+  const r = requis();
+  const av = $("#avert");
+  if (r.niveau > S.niveau) {
+    av.className = "on";
+    av.innerHTML = `⚠ NIVEAU REQUIS (${r.niveau}) SUPÉRIEUR AU NIVEAU ACTIF (${S.niveau}) — toucher pour revoir`;
+  } else { av.className = ""; av.textContent = ""; }
+  const nb = Object.keys(S.events).length;
+  const p = $("#nbEv"); p.hidden = !nb; p.textContent = nb;
+  rendreNiveau(r); rendreEvents(r); rendreZones(r); rendreEscouade(); rendreJournal(); rendrePlus();
+}
+
+function rendreNiveau(r) {
+  const L = NIV[S.niveau];
+  const coches = S.mesures[S.niveau] || [];
+  const nbFait = L.mesures.items.filter((_, i) => coches[i]).length;
+  const statuts = statutsActifs();
+  const herites = NIV.slice(0, S.niveau).filter(n => n.interdits);
+  let h = `
+  <div class="carte alert">
+    <div class="directive">${esc(L.directive)}</div>
+    <div class="src">Directive de commandement — ${L.srcDir}</div>
+  </div>`;
+  if (statuts.length) h += `<div class="carte"><b>Statuts actifs :</b> ${statuts.map(([s, src]) => `<span class="badge b-statut">${esc(s)}</span> <span class="src">${esc(src)}</span>`).join(" ")}</div>`;
+  if (r.niveau > S.niveau) h += `<div class="carte" style="border-color:var(--red)"><b class="b-val">Niveau requis : ${r.niveau}</b> — ${r.sources.filter(s => s.niveau > S.niveau).map(s => esc(s.lib)).join(" ; ")}.
+    <div class="btns"><button class="btn pri" data-act="revoir">Revoir le passage en N${r.niveau}</button></div></div>`;
+  h += `<h2>Mesures immédiates <span class="src">${L.mesures.src}</span> — ${nbFait}/${L.mesures.items.length}</h2><div class="carte" style="padding:0 6px">`;
+  L.mesures.items.forEach((m, i) => {
+    const txt = m.includes("{ANNONCE}") ? m.replace("{ANNONCE}", annonce(S.niveau)) : m;
+    h += `<label class="chk ${coches[i] ? "fait" : ""}"><input type="checkbox" data-mesure="${i}" ${coches[i] ? "checked" : ""}><span class="box"></span><span class="corps"><span class="lib">${i + 1}. ${esc(txt)}</span></span></label>`;
+  });
+  h += `</div>`;
+  if (L.notes && L.notes.length) h += `<ul class="plain">${L.notes.map(([t, s]) => `<li>${esc(t)} <span class="src">${esc(s)}</span></li>`).join("")}</ul>`;
+  h += `<div class="deux-col"><div><h2>Interdits <span class="src">${L.interdits.src}</span></h2><ul class="plain interdits">${L.interdits.items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  if (herites.length) h += `<details><summary>Interdits hérités (N0–N${S.niveau - 1})</summary><div class="in"><p class="src">Chaque niveau hérite des interdits des niveaux inférieurs (✔ règle de table).</p>${herites.map(n => `<h3>N${n.n} <span class="src">${n.interdits.src}</span></h3><ul class="plain interdits">${n.interdits.items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}</div></details>`;
+  h += `</div><div>`;
+  if (L.escalade) h += `<h2>Escalade → niveau ${L.escalade.vers}</h2><ul class="plain">${L.escalade.items.map(([t, s]) => `<li>${esc(t)} <span class="src">${esc(s)}</span></li>`).join("")}</ul>`;
+  else h += `<h2>Escalade</h2><p>Niveau maximal.</p>`;
+  h += `</div></div>
+  <h2>Situation, engagement, zone</h2>
+  <p>${esc(L.situation)} <span class="src">${L.srcSit}</span></p>
+  <div class="carte">
+    <div class="ligne"><b>ROE ${L.roe.n} — ${esc(L.roe.nom)}</b><span>Finalité : ${esc(L.roe.fin)}</span></div>
+    <p style="font-size:14px">${esc(L.roe.detail)} <span class="src">${L.roe.src}</span></p>
+    <div class="ligne"><b>Zone associée :</b><span>${esc(L.zone)}</span><span class="src">✔ règle de table</span></div>
+  </div>
+  <h2>Annonce radio</h2><div class="annonce">« ${esc(annonce(S.niveau))} »</div><div class="src">${DOREX_DATA.annonce.src}</div>
+  <div class="btns">
+    <button class="btn pri" data-act="monter" ${S.niveau >= 5 ? "disabled" : ""}>▲ Monter le niveau</button>
+    <button class="btn dang" data-act="baisser" ${S.niveau <= 0 ? "disabled" : ""}>▼ Baisser le niveau</button>
+    <button class="btn" data-act="raz-mesures">Décocher les mesures N${S.niveau}</button>
+  </div>`;
+  $("#t-niveau").innerHTML = h;
+}
+
+function rendreEvents(r) {
+  let h = `<div class="resume">
+    <div><div class="src">NIVEAU REQUIS</div><div class="big b-n${r.niveau}">${r.niveau}</div></div>
+    <div><div class="src">NIVEAU ACTIF</div><div class="big b-n${S.niveau}">${S.niveau}</div></div></div>
+    <p class="src">Niveau requis = maximum des événements cochés et des zones. « +1 » = niveau au moment où l'événement est coché, plus un. Décocher fait redescendre automatiquement au niveau imposé par ce qui reste actif.</p>
+    <div class="btns"><button class="btn" data-act="ouvrir-tout">Tout déplier</button><button class="btn" data-act="fermer-tout">Tout replier</button></div>`;
+  for (const g of DOREX_DATA.groupes) {
+    const evs = DOREX_DATA.evenements.filter(e => e.g === g.id);
+    const nbOn = evs.filter(e => S.events[e.id]).length;
+    const ouvert = S._ouverts ? S._ouverts[g.id] : undefined;
+    h += `<details class="grp" data-grp="${g.id}" ${ouvert || (ouvert === undefined && nbOn) ? "open" : ""}><summary>${esc(g.titre)} ${nbOn ? `<span class="badge b-n${S.niveau}">${nbOn} actif${nbOn > 1 ? "s" : ""}</span>` : ""}</summary><div class="in">`;
+    if (g.note) h += `<p class="src" style="white-space:normal;padding:0 8px">${esc(g.note)}</p>`;
+    for (const e of evs) {
+      const v = S.events[e.id];
+      const n = v ? niveauEvent(e.id, S) : null;
+      const niv = e.rel ? `<span class="badge b-rel">NIVEAU +1</span>${v ? " " + badgeNiv(n, false) + ` <span class="src">(base N${v.base})</span>` : ""}` : (e.niveau !== null ? badgeNiv(e.niveau) : `<span class="badge b-statut">STATUT</span>`);
+      h += `<label class="chk ev ${v ? "actif" : ""}"><input type="checkbox" data-ev="${e.id}" ${v ? "checked" : ""}><span class="box"></span><span class="corps">
+        <span class="lib">${esc(e.lib)}</span>
+        <span class="meta">${niv} ${modeBadge(e.mode)} ${e.statut ? `<span class="badge b-statut">${esc(e.statut)}</span>` : ""} <span class="src">${esc(e.src)}</span></span>
+        ${e.effet ? `<div class="eff">→ ${esc(e.effet)}</div>` : ""}
+        ${v && v.t ? `<div class="eff">coché à ${heure(v.t)}</div>` : ""}
+      </span></label>`;
+    }
+    h += `</div></details>`;
+  }
+  $("#t-events").innerHTML = h;
+}
+
+function rendreZones(r) {
+  let h = `<h2>Secteurs</h2>
+  <form id="fZone" class="carte">
+    <label for="zNom">Nouveau secteur</label>
+    <input type="text" id="zNom" placeholder="Nom (ex. Module B, Sas 3…)" maxlength="60" autocomplete="off">
+    <div class="seg" role="group" aria-label="Niveau de zone">${ZC.map(z => `<button type="button" class="zc${z.c} ${z.c === 0 ? "on" : ""}" data-newc="${z.c}">C${z.c}</button>`).join("")}</div>
+    <div class="btns"><button type="submit" class="btn pri plein">＋ Ajouter le secteur</button></div>
+  </form>`;
+  if (!S.zones.length) h += `<p class="vide">Aucun secteur. Une zone classée C1 ou plus fait monter le niveau requis.</p>`;
+  for (const z of S.zones) {
+    const zc = ZC[z.c];
+    h += `<div class="zone zc${z.c}" style="border-color:var(--zc)">
+      <div class="zt"><input type="text" value="${esc(z.nom)}" data-renom="${z.id}" aria-label="Nom du secteur" maxlength="60">
+      <button class="btn dang ico" data-supz="${z.id}" aria-label="Supprimer">✕</button></div>
+      <div class="seg">${ZC.map(c => `<button type="button" class="zc${c.c} ${c.c === z.c ? "on" : ""}" data-zone="${z.id}" data-c="${c.c}">C${c.c}</button>`).join("")}</div>
+      <div class="zinfo"><b style="color:var(--zc)">C${z.c} ${esc(zc.nom)}</b> — ${esc(zc.condition)}. Mesures : ${esc(zc.mesures)}. ${zc.niveauMin ? `Impose au moins le niveau ${zc.niveauMin}.` : ""} <span class="src">${esc(zc.src)}</span></div>
+    </div>`;
+  }
+  h += `<h2>Niveaux de zone <span class="src">DOREX §7.3</span></h2><div class="tab-scroll"><table>
+    <tr><th>Zone</th><th>Condition</th><th>Accès / mesures</th><th>Niveau min.</th></tr>
+    ${ZC.map(z => `<tr><td class="zc${z.c}" style="color:var(--zc)"><b>C${z.c}</b><br>${esc(z.nom)}</td><td>${esc(z.condition)}</td><td>${esc(z.mesures)}</td><td>${z.niveauMin ? "N" + z.niveauMin : "—"}</td></tr>`).join("")}
+    </table></div>
+    <p class="src" style="white-space:normal">Niveau minimal par zone ✔ règle de table ; ${DOREX_DATA.zonesC4Multiples.seuil} zones C4 ou plus → N${DOREX_DATA.zonesC4Multiples.niveauMin} (${esc(DOREX_DATA.zonesC4Multiples.src)}).</p>
+    <details><summary>Accès, ventilation, rupture</summary><div class="in"><ul class="plain">${DOREX_DATA.zoneRappels.map(([t, s]) => `<li>${esc(t)} <span class="src">${esc(s)}</span></li>`).join("")}</ul></div></details>`;
+  $("#t-zones").innerHTML = h;
+  nouvelleC = 0;
+}
+let nouvelleC = 0;
+
+/* ---------- Onglet Escouade ----------
+   Le cadre de l'onglet est construit une seule fois ; chaque fiche est un nœud gardé en mémoire (mNoeuds)
+   et n'est reconstruite que si son HTML a changé (mCache). Une fiche reconstruite rend le focus à l'élément
+   de même data-f. L'état déplié / replié des fiches reste en mémoire (mOuverts), hors sauvegarde. */
+const mOuverts = new Set(), mNoeuds = new Map(), mCache = new Map();
+/* Silhouette vue de face : le côté droit du marine est à gauche de l'écran. */
+const FORMES = {
+  tete: ["circle", 'cx="60" cy="22" r="15"'],
+  torse: ["path", 'd="M43 42H77Q85 42 85 51L80 120H40L35 51Q35 42 43 42Z"'],
+  brasD: ["rect", 'x="16" y="46" width="16" height="76" rx="8" transform="rotate(8 24 46)"'],
+  brasG: ["rect", 'x="88" y="46" width="16" height="76" rx="8" transform="rotate(-8 96 46)"'],
+  jambeD: ["rect", 'x="41" y="123" width="18" height="82" rx="8"'],
+  jambeG: ["rect", 'x="61" y="123" width="18" height="82" rx="8"']
+};
+function silhouette(m) {
+  const a = `data-mid="${esc(m.id)}"`;
+  return `<svg viewBox="0 0 120 210" role="group" aria-label="Schéma du corps — toucher une partie pour noter une blessure">`
+    + ESC.corps.map(p => {
+      const [tag, attr] = FORMES[p.id], b = m.blessures[p.id];
+      return `<${tag} ${attr} class="bp ${b ? "blesse" : ""}" data-part="${p.id}" ${a} data-f="p-${p.id}" tabindex="0" role="button" aria-label="${p.lib}${b ? " : blessure" : ""}"><title>${p.lib}${b ? " — " + esc(b) : ""}</title></${tag}>`;
+    }).join("")
+    + `<text class="bp-l" x="3" y="146">D</text><text class="bp-l" x="110" y="146">G</text></svg>`;
+}
+/* Tracé du cardiogramme : deux périodes identiques de 240 unités (motif qui boucle sans raccord).
+   Battement PQRST centré sur x, amplitude a ; ligne de base y = 20. Mis en cache par état. */
+const ECG_TRACES = {};
+function traceECG(sid) {
+  if (ECG_TRACES[sid]) return ECG_TRACES[sid];
+  const e = SANTE[sid].ecg, W = 240, B = 20, f = v => +v.toFixed(1);
+  let d = "M0 " + B;
+  for (let t = 0; t < 2; t++) e.pos.forEach((p, i) => {
+    const x = t * W + p * W, a = Array.isArray(e.amp) ? e.amp[i] : (e.amp || 1);
+    d += ` L${f(x - 14)} ${B} Q${f(x - 11)} ${f(B - 3 * a)} ${f(x - 8)} ${B} L${f(x - 4)} ${B} L${f(x - 2)} ${f(B + 2 * a)}`
+      + ` L${f(x)} ${f(B - 16 * a)} L${f(x + 2.5)} ${f(B + 5 * a)} L${f(x + 5)} ${B} Q${f(x + 11)} ${f(B - 5 * a)} ${f(x + 17)} ${B}`;
+  });
+  return (ECG_TRACES[sid] = d + " L" + 2 * W + " " + B);
+}
+function ecgHTML(sid, mini) {
+  const e = SANTE[sid].ecg, cls = "ecg" + (mini ? " mini" : "");
+  if (!e.pos.length) return `<div class="${cls}" aria-hidden="true"><svg viewBox="0 0 240 40" preserveAspectRatio="none"><path d="M0 20H240"/></svg><span class="ecg-mort">DÉCÉDÉ</span></div>`;
+  return `<div class="${cls}" aria-hidden="true"><div class="ecg-rail" data-duree="${e.duree}" style="animation-duration:${e.duree}s"><svg viewBox="0 0 480 40" preserveAspectRatio="none"><path d="${traceECG(sid)}"/></svg></div></div>`;
+}
+function carteMarine(m) {
+  const s = SANTE[m.sante], st = STATUTS[m.statut], id = esc(m.id), a = `data-mid="${id}"`;
+  const nbBl = Object.keys(m.blessures).length;
+  let h = `<details class="marine s-${m.sante}" data-marine="${id}">
+  <summary data-f="sum">
+    <span class="m-id"><b class="m-nom">${esc(nomMarine(m))}</b><span class="m-cl">${esc(m.classe || "classe non renseignée")}</span></span>
+    <span class="m-meta"><span class="badge m-sb">${esc(s.lib)}</span>${m.statut !== "aucun" ? `<span class="badge ${st.grav > 1 ? "b-val" : "b-statut"}">${esc(st.lib)}</span>` : ""}<span class="m-st ${m.stress >= 7 ? "h" : ""}">Stress ${m.stress}</span>${nbBl ? `<span class="badge b-val">${nbBl} blessure${nbBl > 1 ? "s" : ""}</span>` : ""}</span>
+    ${ecgHTML(m.sante, true)}
+  </summary><div class="in">
+  <div class="m-champs">
+    <div><label class="m-lab" for="mn-${id}">Nom</label><input type="text" id="mn-${id}" data-f="nom" ${a} data-mchamp="nom" value="${esc(m.nom)}" maxlength="60" autocomplete="off"></div>
+    <div><label class="m-lab" for="mp-${id}">Pseudo</label><input type="text" id="mp-${id}" data-f="pseudo" ${a} data-mchamp="pseudo" value="${esc(m.pseudo)}" maxlength="40" autocomplete="off"></div>
+    <div><label class="m-lab" for="mm-${id}">Immatriculation</label><input type="text" id="mm-${id}" data-f="matricule" ${a} data-mchamp="matricule" value="${esc(m.matricule)}" maxlength="30" autocomplete="off"></div>
+    <div><label class="m-lab" for="mc-${id}">Classe</label><input type="text" id="mc-${id}" data-f="classe" ${a} data-mchamp="classe" value="${esc(m.classe)}" maxlength="60" autocomplete="off" list="dlClasses" placeholder="Choisir ou saisir"></div>
+  </div>
+  <span class="m-lab">État de santé</span>
+  <div class="seg s3 sante" role="group" aria-label="État de santé">${ESC.sante.map(x => `<button type="button" class="s-${x.id} ${x.id === m.sante ? "on" : ""}" data-f="sa-${x.id}" ${a} data-msante="${x.id}" aria-pressed="${x.id === m.sante}">${esc(x.lib)}</button>`).join("")}</div>
+  <div class="m-corps">
+    <div class="m-sil">${silhouette(m)}</div>
+    <div class="m-droite">${ecgHTML(m.sante, false)}
+      <div class="m-bpm">♥ ${esc(s.bpm)} BPM${s.rythme ? " — " + esc(s.rythme) : ""}</div>
+      <ul class="m-bl">${ESC.corps.map(p => { const b = m.blessures[p.id];
+        return `<li><button type="button" class="${b ? "blesse" : ""}" data-f="bl-${p.id}" ${a} data-mbless="${p.id}"><b>${p.lib}</b><span>${b ? esc(b) : "—"}</span></button></li>`; }).join("")}</ul>
+    </div>
+  </div>
+  <label class="m-lab" for="ms-${id}">Statut DOREX</label>
+  <select id="ms-${id}" data-f="statut" ${a} data-mstatut="1">${ESC.statuts.map(x => `<option value="${x.id}" ${x.id === m.statut ? "selected" : ""}>${esc(x.lib)}</option>`).join("")}</select>
+  ${st.def ? `<p class="src" style="white-space:normal">${esc(st.def)} — ${esc(st.src)}</p>` : ""}
+  <span class="m-lab">Stress</span>
+  <div class="m-stress">
+    <button type="button" class="btn ico" data-f="st-moins" ${a} data-mstress="-1" aria-label="Diminuer le stress" ${m.stress <= 0 ? "disabled" : ""}>−</button>
+    <span class="val">${m.stress}</span>
+    <button type="button" class="btn ico" data-f="st-plus" ${a} data-mstress="1" aria-label="Augmenter le stress" ${m.stress >= 10 ? "disabled" : ""}>+</button>
+    <span class="jauge" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < m.stress ? "on" : ""} ${i >= 6 ? "h" : ""}"></i>`).join("")}</span>
+  </div>
+  <span class="m-lab">Équipement</span>`;
+  if (!m.equip.length) h += `<p class="vide">Aucun équipement noté.</p>`;
+  for (const q of m.equip) {
+    const qa = `${a} data-eq="${esc(q.id)}"`;
+    h += `<div class="m-eq"><input type="text" data-f="eq-${esc(q.id)}" ${qa} data-eqchamp="lib" value="${esc(q.lib)}" maxlength="80" placeholder="Arme, munitions, charges…" aria-label="Équipement" autocomplete="off">
+      <span class="ctl"><button type="button" class="btn ico pt" data-f="eqm-${esc(q.id)}" ${qa} data-eqd="-1" aria-label="Retirer 1">−</button>
+      <input type="number" min="0" max="99999" step="1" inputmode="numeric" data-f="eqn-${esc(q.id)}" ${qa} data-eqchamp="n" value="${q.n}" aria-label="Quantité">
+      <button type="button" class="btn ico pt" data-f="eqp-${esc(q.id)}" ${qa} data-eqd="1" aria-label="Ajouter 1">+</button>
+      <button type="button" class="btn dang ico pt" ${qa} data-eqsup="1" aria-label="Supprimer la ligne">✕</button></span></div>`;
+  }
+  h += `<div class="btns"><button type="button" class="btn" data-f="eq-ajout" ${a} data-eqajout="1">＋ Ligne d'équipement</button>
+    <button type="button" class="btn dang" ${a} data-msup="1">Retirer ce marine</button></div>
+  </div></details>`;
+  return h;
+}
+/* Recale la phase des cardiogrammes d'une fiche neuve sur l'horloge de la page : une fiche reconstruite
+   reprend le tracé là où l'ancienne en était (pas de saut visible). */
+function calerECG(n) {
+  n.querySelectorAll(".ecg-rail").forEach(r => {
+    const d = Number(r.dataset.duree);
+    if (d > 0) r.style.animationDelay = -((performance.now() / 1000) % d).toFixed(3) + "s";
+  });
+}
+function remplacerNoeud(ancien, nouveau) {
+  const act = document.activeElement;
+  let cle = null, sel = null;
+  if (act && ancien.contains(act) && act.dataset && act.dataset.f) {
+    cle = act.dataset.f;
+    try { if (typeof act.selectionStart === "number") sel = [act.selectionStart, act.selectionEnd]; } catch (e) {}
+  }
+  ancien.replaceWith(nouveau);
+  if (!cle) return;
+  const x = [...nouveau.querySelectorAll("[data-f]")].find(el => el.dataset.f === cle);
+  if (x) { x.focus({ preventScroll: true }); if (sel && x.setSelectionRange) try { x.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+}
+function rendreEscouade() {
+  const sec = $("#t-escouade");
+  if (!$("#mListe")) sec.innerHTML = `<h2>Escouade</h2>
+    <p class="src" style="white-space:normal">Suivi individuel. Toucher une partie du corps (ou sa ligne dans la liste) pour noter une blessure ; note vide = pas de blessure. Santé, statut DOREX, stress et blessures sont écrits au journal.</p>
+    <div class="btns"><button type="button" class="btn pri plein" data-act="m-ajouter">＋ Ajouter un marine</button></div>
+    <p class="vide" id="mVide">Aucun marine dans l'escouade.</p>
+    <div id="mListe"></div>
+    <datalist id="dlClasses">${ESC.classes.map(c => `<option value="${esc(c)}"></option>`).join("")}</datalist>
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+      <pattern id="m-hachure" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" style="fill:rgba(255,75,62,.22)"/><line x1="1.5" y1="0" x2="1.5" y2="6" style="stroke:#ff4b3e;stroke-width:3"/></pattern>
+    </defs></svg>`;
+  const liste = $("#mListe");
+  $("#mVide").hidden = S.marines.length > 0;
+  const vus = new Set();
+  S.marines.forEach((m, i) => {
+    vus.add(m.id);
+    const html = carteMarine(m);
+    let n = mNoeuds.get(m.id);
+    if (!n || mCache.get(m.id) !== html) {
+      const t = document.createElement("template"); t.innerHTML = html;
+      const nv = t.content.firstElementChild;
+      nv.open = mOuverts.has(m.id);
+      calerECG(nv);
+      if (n && n.parentNode) remplacerNoeud(n, nv);
+      n = nv; mNoeuds.set(m.id, n); mCache.set(m.id, html);
+    }
+    if (liste.children[i] !== n) liste.insertBefore(n, liste.children[i] || null);
+  });
+  for (const [id, n] of mNoeuds) if (!vus.has(id)) { n.remove(); mNoeuds.delete(id); mCache.delete(id); }
+}
+
+let filtreJournal = "tout";  // filtre d'affichage du journal (en mémoire, non sauvegardé)
+function rendreJournal() {
+  let h = `<h2>Journal</h2>
+  <form id="fNote" class="carte">
+    <label for="nTxt">Note libre</label>
+    <textarea id="nTxt" rows="2" maxlength="500" placeholder="Observation, ordre reçu…"></textarea>
+    <label class="m-lab" for="nCat">Catégorie</label>
+    <select id="nCat">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${k === "autre" ? "selected" : ""}>${v}</option>`).join("")}</select>
+    <div class="btns"><button type="submit" class="btn pri plein">＋ Ajouter la note</button></div>
+  </form>
+  <div class="seg s4" role="group" aria-label="Filtrer le journal">${[["tout", "Tout"]].concat(Object.entries(CATS)).map(([k, v]) =>
+    `<button type="button" class="${k === filtreJournal ? "on" : ""}" data-jf="${k}" aria-pressed="${k === filtreJournal}">${v}</button>`).join("")}</div>`;
+  const lib = { niveau: "Niveau", refus: "Refus", evenement: "Événement", zone: "Zone", mesure: "Mesure", marine: "Escouade", note: "Note", systeme: "Système" };
+  let nb = 0;
+  for (let i = S.journal.length - 1; i >= 0; i--) {
+    const j = S.journal[i], cat = CATS[j.cat] ? j.cat : catDe(j.type);
+    if (filtreJournal !== "tout" && cat !== filtreJournal) continue;
+    nb++;
+    const ty = (lib[j.type] || j.type) + (j.type === "note" && cat !== "autre" ? " · " + CATS[cat] : "");
+    h += `<div class="jl ${j.type}"><div class="ent"><span class="h">${heure(j.t)}</span><span class="ty">${esc(ty)}</span></div><div class="tx">${esc(j.txt)}</div></div>`;
+  }
+  if (!nb) h += `<p class="vide">${S.journal.length ? "Aucune entrée dans cette catégorie." : "Journal vide."}</p>`;
+  $("#t-journal").innerHTML = h;
+}
+
+function rendrePlus() {
+  const R = S.reglages;
+  let h = `<h2>Réglages</h2>
+    <div class="carte">
+      <label for="rEsc">Nom de l'escouade (annonce radio)</label>
+      <input type="text" id="rEsc" value="${esc(R.escouade)}" maxlength="30" placeholder="X">
+      <div class="btns">
+        <button class="btn" data-act="theme">Couleur : ${R.theme === "ambre" ? "ambre" : "vert"}</button>
+        <button class="btn" data-act="scan">Lignes de balayage : ${R.scan ? "oui" : "non"}</button>
+      </div>
+    </div>
+
+    <h2>Sauvegarde</h2>
+    <p class="src" style="white-space:normal">L'état est enregistré automatiquement dans ce navigateur.</p>
+    <div class="btns">
+      <button class="btn" data-act="export">⇩ Exporter (JSON)</button>
+      <button class="btn" data-act="import">⇧ Importer (JSON)</button>
+      <button class="btn dang" data-act="nouvelle">Nouvelle partie</button>
+    </div>
+    <p class="src" style="white-space:normal">DOREX Ver. 2184-26-6b — aide-mémoire de jeu, sources : .claude/skills du projet.</p>`;
+  $("#t-plus").innerHTML = h;
+}
+
+/* ---------- Onglet Règles ----------
+   Rendu une seule fois au démarrage (contenu statique) ; la ligne du niveau actif dans le
+   tableau récapitulatif est surlignée en CSS (body[data-niv] tr[data-rn]).
+   La recherche repart du HTML d'origine, surligne les correspondances (sans tenir compte
+   des accents ni de la casse), ouvre les sections concernées et masque les autres. */
+let REGLES_HTML = "", rechercheMinuterie = null;
+function rgTxt(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"); }
+function rgSrc(s) { return s ? ` <span class="src">${esc(s)}</span>` : ""; }
+function rgItem(it) { return Array.isArray(it) ? rgTxt(it[0]) + rgSrc(it[1]) : rgTxt(it); }
+function rgListe(items, o) {
+  o = o || {};
+  const tag = o.ordre ? "ol" : "ul";
+  const cls = o.ordre ? "num" : "plain" + (o.interdits ? " interdits" : "") + (o.coches ? " coches" : "");
+  return `<${tag} class="${cls}">${items.map(i => `<li>${rgItem(i)}</li>`).join("")}</${tag}>`;
+}
+function rgCarte(c) {
+  return `<div class="rc"><div class="rc-t">${rgTxt(c.titre)}${c.badge || ""}</div>`
+    + (c.lignes || []).map(([k, v]) => `<p><b>${esc(k)} :</b> ${rgTxt(v)}</p>`).join("")
+    + (c.texte ? `<p>${rgTxt(c.texte)}</p>` : "")
+    + (c.src ? `<div class="src">${esc(c.src)}</div>` : "") + `</div>`;
+}
+/* hn : niveau de titre ; cls : classe du bloc (« rg-b » = filtrable par la recherche) */
+function rgBloc(b, hn, cls) {
+  hn = hn || "h3"; cls = cls || "rg-b";
+  if (b.gen) return RG_GEN[b.gen](b, hn, cls);
+  let h = `<div class="${cls}">`;
+  if (b.titre) h += `<${hn}>${esc(b.titre)}${rgSrc(b.src)}</${hn}>`;
+  if (b.intro) h += `<p>${rgItem(b.intro)}</p>`;
+  if (b.cartes) h += b.cartes.map(rgCarte).join("");
+  if (b.items) h += rgListe(b.items, b);
+  if (b.note) h += `<p class="rg-note">${rgItem(b.note)}</p>`;
+  return h + `</div>`;
+}
+function annonceGenerique(y) { return DOREX_DATA.annonce.texte.replace("{X}", "X").replace("{Y}", y); }
+function badgesEvent(e) {
+  const niv = e.rel ? `<span class="badge b-rel">NIVEAU +1</span>` : (e.niveau !== null ? badgeNiv(e.niveau) : `<span class="badge b-statut">STATUT</span>`);
+  return `${niv} ${modeBadge(e.mode)} ${e.statut ? `<span class="badge b-statut">${esc(e.statut)}</span>` : ""}`;
+}
+
+/* Générateurs : blocs construits à partir des données existantes (niveaux, événements, zones, ROE). */
+const RG_GEN = {
+  annonce: (b, hn, cls) => `<div class="${cls}"><${hn}>Annonce radio${rgSrc(DOREX_DATA.annonce.src)}</${hn}>
+    <div class="annonce">« ${esc(annonceGenerique("Y"))} »</div>
+    <p class="rg-note">Formule unique pour tout changement de niveau (montée ou saut). X = nom de l'escouade, Y = nouveau niveau.</p></div>`,
+
+  recapNiveaux: (b, hn, cls) => `<div class="${cls}"><${hn}>Tableau récapitulatif</${hn}>
+    <div class="tab-scroll"><table class="recap"><tr><th>Niveau</th><th>ROE</th><th>Zone</th></tr>
+    ${NIV.map(n => `<tr data-rn="${n.n}"><td><b class="b-n${n.n}">${n.n}</b> ${esc(n.nom)}</td><td>${n.roe.n} ${esc(n.roe.nom)}<br><span class="src">${esc(n.roe.fin)}</span></td><td>${esc(n.zone.split(" — ")[0])}</td></tr>`).join("")}
+    </table></div>
+    <p class="rg-note">Ligne surlignée = niveau actif. EOD (niveaux), ROED (engagement), correspondance zones ✔ règle de table.</p></div>`,
+
+  fichesNiveaux: () => NIV.map(L => {
+    const F = DOREX_DATA.regles.fiches[L.n];
+    let h = `<details class="sub"><summary><b class="b-n${L.n}">N${L.n}</b> ${esc(L.nom)}</summary><div class="in">
+      <p class="rg-dir">${esc(L.directive)}${rgSrc(L.srcDir)}</p>
+      <p><b>Situation :</b> ${esc(L.situation)}${rgSrc(L.srcSit)}</p>
+      <p><b>Mission :</b> ${esc(F.mission)}${rgSrc(L.srcSit)}</p>
+      <h4>Déclencheurs — un seul suffit${rgSrc(F.declencheurs.src)}</h4>${rgListe(F.declencheurs.items)}`;
+    if (F.declencheurs.note) h += `<p class="rg-note">${rgItem(F.declencheurs.note)}</p>`;
+    h += `<h4>Mesures immédiates${rgSrc(L.mesures.src)}</h4>${rgListe(L.mesures.items.map(m => m.replace("{ANNONCE}", annonceGenerique(L.n))), { ordre: true })}`;
+    if (L.notes && !F.remplaceNotes) h += rgListe(L.notes);
+    h += `<h4>Interdits${rgSrc(L.interdits.src)}</h4>${rgListe(L.interdits.items, { interdits: true })}`;
+    if (L.n > 0) h += `<p class="rg-note">S'ajoutent les interdits des niveaux inférieurs (✔ règle de table).</p>`;
+    h += F.complements.map(c => rgBloc(c, "h4", "rg-c")).join("");
+    h += L.escalade ? `<h4>Escalade → niveau ${L.escalade.vers}${rgSrc(L.escalade.src)}</h4>${rgListe(L.escalade.items)}` : `<h4>Escalade</h4><p>Niveau maximal.</p>`;
+    h += `<h4>Engagement — ROE ${L.roe.n} ${esc(L.roe.nom)}</h4><p><b>Finalité :</b> ${esc(L.roe.fin)}. ${esc(L.roe.detail)}${rgSrc(L.roe.src)}</p>
+      <p><b>Zone associée :</b> ${esc(L.zone)}${rgSrc("✔ règle de table")}</p></div></details>`;
+    return h;
+  }).join(""),
+
+  matrice: (b, hn, cls) => DOREX_DATA.groupes.map(g => {
+    const evs = DOREX_DATA.evenements.filter(e => e.g === g.id);
+    return `<div class="${cls}"><${hn}>${esc(g.titre)}</${hn}>${g.note ? `<p class="rg-note">${esc(g.note)}</p>` : ""}
+      <ul class="plain mx">${evs.map(e => `<li>${esc(e.lib)}<div class="meta">${badgesEvent(e)}${rgSrc(e.src)}</div>${e.effet ? `<div class="eff">→ ${esc(e.effet)}</div>` : ""}</li>`).join("")}</ul></div>`;
+  }).join("") + `<div class="${cls}"><${hn}>Zones</${hn}><ul class="plain mx">
+      ${ZC.filter(z => z.niveauMin > 0).map(z => `<li>Zone classée C${z.c} (${esc(z.nom)})<div class="meta">${badgeNiv(z.niveauMin)}${rgSrc("✔ règle de table")}</div></li>`).join("")}
+      <li>${DOREX_DATA.zonesC4Multiples.seuil} zones C4 ou plus (perte de contrôle de plusieurs zones critiques)<div class="meta">${badgeNiv(DOREX_DATA.zonesC4Multiples.niveauMin)}${rgSrc(DOREX_DATA.zonesC4Multiples.src)}</div></li></ul></div>`,
+
+  minuteries: (b, hn, cls) => rgBloc(DOREX_DATA.regles.minuteries, hn, cls),
+
+  roe: (b, hn, cls) => `<div class="${cls}"><${hn}>Échelle ROE 0 à 5</${hn}>${NIV.map(L => rgCarte({
+      titre: "ROE " + L.roe.n + " — " + L.roe.nom, badge: ` <span class="badge b-n${L.n}">${esc(L.roe.fin)}</span>`,
+      lignes: [["Niveau DOREX", "N" + L.n + " " + L.nom]], texte: L.roe.detail, src: L.roe.src })).join("")}</div>`,
+
+  zonesC: (b, hn, cls) => `<div class="${cls}"><${hn}>Niveaux de zone${rgSrc("DOREX §7.3")}</${hn}>${ZC.map(z => rgCarte({
+      titre: "C" + z.c + " — " + z.nom, badge: ` <span class="badge zc${z.c}" style="color:var(--zc)">C${z.c}</span>`,
+      lignes: [["Condition", z.condition], ["Accès / mesures", z.mesures], ["Niveau DOREX minimal", z.niveauMin ? "N" + z.niveauMin : "—"]], src: z.src })).join("")}</div>`,
+
+  zonesCorrespondance: (b, hn, cls) => `<div class="${cls}"><${hn}>Correspondance avec les niveaux DOREX${rgSrc("✔ règle de table")}</${hn}>
+    <p><b>Zone concernée à chaque niveau :</b></p>${rgListe(NIV.map(L => "**N" + L.n + "** → " + L.zone))}
+    <p><b>Niveau DOREX minimal imposé par une zone :</b></p>${rgListe(ZC.filter(z => z.niveauMin > 0).map(z => "**C" + z.c + "** → N" + z.niveauMin)
+      .concat([[DOREX_DATA.zonesC4Multiples.seuil + " zones C4 ou plus → **N" + DOREX_DATA.zonesC4Multiples.niveauMin + "** (perte de contrôle de plusieurs zones critiques)", DOREX_DATA.zonesC4Multiples.src]]))}
+    <p class="rg-note">Règle explicite des documents : disparition en zone EXO ou BIO → C2 minimum (DOREX §9.7, EOD §4.5).</p></div>`,
+
+  crise: (b, hn, cls) => `<div class="${cls}"><${hn}>CRISE MAJEURE — un seul critère suffit${rgSrc("DOREX §11.1")}</${hn}>
+    ${rgListe(DOREX_DATA.evenements.filter(e => e.g === "crise").map(e => e.lib))}
+    <p class="rg-note">Un critère suffit : <b>niveau 4 automatique</b>, statut CRISE MAJEURE <span class="src">DOREX §11.1, §11.3</span>. Mesures des niveaux 4 et 5 : voir les fiches de niveau.</p></div>`
+    + DOREX_DATA.regles.fiches[4].complements.concat(DOREX_DATA.regles.fiches[5].complements).map(c => rgBloc(c, hn, cls)).join("")
+};
+
+function rendreRegles() {
+  let h = "";
+  for (const s of DOREX_DATA.regles.sections) {
+    h += `<details class="rg" data-rg="${s.id}"><summary>${esc(s.titre)}</summary><div class="in">`;
+    if (s.blocs) h += s.blocs.map(b => rgBloc(b)).join("");
+    if (s.sous) h += s.sous.map(ss => `<details class="sub"><summary>${esc(ss.titre)}${rgSrc(ss.src)}</summary><div class="in">${ss.blocs.map(b => rgBloc(b, "h4")).join("")}</div></details>`).join("");
+    h += `</div></details>`;
+  }
+  REGLES_HTML = h;
+  $("#t-regles").innerHTML = `<h2>Règles DOREX</h2>
+    <div class="rg-q"><input type="text" id="rgQ" placeholder="Rechercher : drone, sas, symptôme…" autocomplete="off" enterkeyhint="search" aria-label="Rechercher dans les règles">
+      <button class="btn ico" data-act="rg-effacer" aria-label="Effacer la recherche">✕</button></div>
+    <p id="rgInfo" class="rg-note" aria-live="polite"></p>
+    <div class="btns"><button class="btn" data-act="rg-ouvrir">Tout déplier</button><button class="btn" data-act="rg-fermer">Tout replier</button></div>
+    <div id="rgCorps">${h}</div>`;
+}
+
+function sansAccent(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+function chercherRegles(q) {
+  const corps = $("#rgCorps"), info = $("#rgInfo");
+  corps.innerHTML = REGLES_HTML;
+  const nq = sansAccent(q.trim());
+  if (nq.length < 2) { info.textContent = q.trim() ? "Saisir au moins 2 caractères." : ""; return; }
+  // 1. Surlignage : texte normalisé caractère par caractère, avec correspondance des positions d'origine.
+  const noeuds = [], w = document.createTreeWalker(corps, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) noeuds.push(w.currentNode);
+  let total = 0;
+  for (const tn of noeuds) {
+    const t = tn.nodeValue;
+    let n = ""; const pos = [];
+    for (let i = 0; i < t.length; i++) for (const c of sansAccent(t[i])) { n += c; pos.push(i); }
+    let i = n.indexOf(nq); if (i < 0) continue;
+    const frag = document.createDocumentFragment(); let dernier = 0;
+    while (i >= 0) {
+      const deb = pos[i], fin = pos[i + nq.length - 1] + 1;
+      if (deb >= dernier) {
+        frag.appendChild(document.createTextNode(t.slice(dernier, deb)));
+        const m = document.createElement("mark"); m.textContent = t.slice(deb, fin); frag.appendChild(m);
+        dernier = fin; total++;
+      }
+      i = n.indexOf(nq, i + nq.length);
+    }
+    frag.appendChild(document.createTextNode(t.slice(dernier)));
+    tn.parentNode.replaceChild(frag, tn);
+  }
+  // 2. Filtrage : sections et blocs sans correspondance masqués ; si le titre correspond, tout le contenu reste visible.
+  const appliquer = d => {
+    const contient = !!d.querySelector("mark");
+    d.hidden = !contient; d.open = contient;
+    if (!contient || d.querySelector(":scope > summary mark")) return;
+    d.querySelectorAll(":scope > .in > .rg-b, :scope > .in > details.sub").forEach(x => {
+      if (x.tagName === "DETAILS") return appliquer(x);
+      x.hidden = !x.querySelector("mark");
+      // Dans un bloc retenu dont le titre ne correspond pas : masquer aussi les cartes et lignes de matrice sans correspondance.
+      const titre = x.querySelector(":scope > h3, :scope > h4");
+      if (!x.hidden && !(titre && titre.querySelector("mark"))) x.querySelectorAll(".rc, ul.mx > li").forEach(c => c.hidden = !c.querySelector("mark"));
+    });
+  };
+  const sections = [...corps.querySelectorAll("details.rg")];
+  sections.forEach(appliquer);
+  const nbS = sections.filter(d => !d.hidden).length;
+  info.textContent = total ? total + " correspondance" + (total > 1 ? "s" : "") + " dans " + nbS + " section" + (nbS > 1 ? "s" : "") : "Aucun résultat.";
+}
+
+/* ---------- Modale ---------- */
+const fileModale = [];
+function modale(o) { fileModale.push(o); if (fileModale.length === 1) afficherModale(); }
+function afficherModale() {
+  const o = fileModale[0]; if (!o) { $("#modale").classList.remove("on"); $("#modaleCorps").innerHTML = ""; return; }
+  const c = $("#modaleCorps");
+  c.style.setProperty("--mc", o.couleur || "var(--alert)");
+  c.innerHTML = `<h2>${esc(o.titre)}</h2>${o.html || ""}<div class="btns">${(o.boutons || []).map((b, i) => `<button class="btn ${b.cls || ""}" data-mb="${i}">${esc(b.lib)}</button>`).join("")}</div>`;
+  c.querySelectorAll("[data-mb]").forEach(btn => btn.addEventListener("click", () => {
+    const b = o.boutons[Number(btn.dataset.mb)];
+    fermerModale();
+    if (b.act) b.act();
+  }));
+  $("#modale").classList.add("on");
+  if (o.apres) o.apres(c);
+  // Focus sur le premier bouton, sauf si `apres` l'a déjà placé dans la modale (ex. champ de saisie)
+  const premier = c.querySelector("button"); if (premier && !c.contains(document.activeElement)) premier.focus({ preventScroll: true });
+}
+function fermerModale() { fileModale.shift(); afficherModale(); }
+
+/* ---------- Événements DOM ---------- */
+function $(s) { return document.querySelector(s); }
+function onglet(t) {
+  document.querySelectorAll("#onglets button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("on", s.id === "t-" + t));
+  window.scrollTo(0, 0);
+  try { sessionStorage.setItem("dorex-onglet", t); } catch (e) {}
+}
+document.getElementById("onglets").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) onglet(b.dataset.tab); });
+document.getElementById("avert").addEventListener("click", () => proposerMontee(requis()));
+
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.ev) basculerEvent(t.dataset.ev, t.checked);
+  else if (t.dataset.mesure !== undefined) cocherMesure(S.niveau, Number(t.dataset.mesure), t.checked);
+  else if (t.dataset.renom) renommerZone(t.dataset.renom, t.value);
+  else if (t.id === "rEsc") { S.reglages.escouade = t.value.trim(); sauver(); rendre(); }
+  else if (t.dataset.mstatut) changerStatut(t.dataset.mid, t.value);
+  else if (t.dataset.eqchamp === "n") saisirEquipement(t, true);
+});
+document.addEventListener("keydown", e => {
+  const d = e.target.dataset;
+  if (e.key === "Enter" && d && (d.renom || d.mchamp || d.eqchamp)) e.target.blur();
+  if (e.key === "Enter" && e.target.id === "rgQ") e.target.blur();
+  // Parties du corps du schéma (éléments SVG focalisables) : Entrée / Espace = clic
+  if ((e.key === "Enter" || e.key === " ") && d && d.part && !fileModale.length) { e.preventDefault(); saisirBlessure(d.mid, d.part); }
+  if (e.key === "Escape" && fileModale.length) fermerModale();
+});
+document.addEventListener("toggle", e => {
+  const d = e.target; if (!d.dataset) return;
+  if (d.dataset.grp) (S._ouverts || (S._ouverts = {}))[d.dataset.grp] = d.open;
+  else if (d.dataset.marine) { if (d.open) mOuverts.add(d.dataset.marine); else mOuverts.delete(d.dataset.marine); }
+}, true);
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.mchamp) return saisirChampMarine(t);
+  if (t.dataset.eqchamp) return saisirEquipement(t, false);
+  if (t.id !== "rgQ") return;
+  clearTimeout(rechercheMinuterie);
+  rechercheMinuterie = setTimeout(() => chercherRegles(t.value), 150);
+});
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  if (e.target.id === "fZone") ajouterZone($("#zNom").value, nouvelleC);
+  else if (e.target.id === "fNote") {
+    const v = $("#nTxt").value.trim(); if (!v) return;
+    journal("note", v, $("#nCat").value); sauver(); rendreJournal();
+  }
+});
+document.addEventListener("click", e => {
+  const p = e.target.closest("[data-part]");
+  if (p && !p.closest("#modale")) return saisirBlessure(p.dataset.mid, p.dataset.part);
+  const b = e.target.closest("button"); if (!b || b.closest("#modale") || b.closest("#onglets")) return;
+  if (b.dataset.mid) return actionMarine(b);
+  if (b.dataset.jf) { filtreJournal = b.dataset.jf; return rendreJournal(); }
+  if (b.dataset.newc !== undefined) {
+    nouvelleC = Number(b.dataset.newc);
+    b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    return;
+  }
+  if (b.dataset.zone) return classerZone(b.dataset.zone, Number(b.dataset.c));
+  if (b.dataset.supz) return supprimerZone(b.dataset.supz);
+  switch (b.dataset.act) {
+    case "monter": return changerNiveauManuel(1);
+    case "baisser": return changerNiveauManuel(-1);
+    case "revoir": return proposerMontee(requis());
+    case "raz-mesures": S.mesures[S.niveau] = []; journal("mesure", "Mesures N" + S.niveau + " décochées"); sauver(); return rendre();
+    case "ouvrir-tout": case "fermer-tout": {
+      const o = b.dataset.act === "ouvrir-tout"; S._ouverts = {};
+      DOREX_DATA.groupes.forEach(g => S._ouverts[g.id] = o); return rendreEvents(requis());
+    }
+    case "rg-ouvrir": case "rg-fermer": {
+      const o = b.dataset.act === "rg-ouvrir";
+      document.querySelectorAll("#rgCorps details").forEach(d => { if (!d.hidden) d.open = o; }); return;
+    }
+    case "rg-effacer": $("#rgQ").value = ""; return chercherRegles("");
+    case "m-ajouter": return ajouterMarine();
+    case "theme": S.reglages.theme = S.reglages.theme === "ambre" ? "vert" : "ambre"; sauver(); return rendre();
+    case "scan": S.reglages.scan = !S.reglages.scan; sauver(); return rendre();
+    case "export": return exporter();
+    case "import": return $("#fichierImport").click();
+    case "nouvelle": return modale({ titre: "Nouvelle partie ?", couleur: "var(--red)",
+      html: "<p>Tout l'état (niveau, événements, zones, mesures, escouade, journal) sera effacé. Pensez à exporter d'abord. Les réglages sont conservés.</p>",
+      boutons: [{ lib: "Effacer et recommencer", cls: "dang", act: () => { S = etatVide(S.reglages); journal("systeme", "Nouvelle partie"); sauver(); rendre(); } }, { lib: "Annuler" }] });
+  }
+});
+
+function exporter() {
+  const copie = Object.assign({}, S); delete copie._ouverts;
+  const d = new Date(), p = x => String(x).padStart(2, "0");
+  const nom = `dorex-partie-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(copie, null, 2)], { type: "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  journal("systeme", "Export : " + nom); sauver(); rendreJournal();
+}
+$("#fichierImport").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const lr = new FileReader();
+  lr.onload = () => {
+    try {
+      const o = JSON.parse(lr.result);
+      if (!o || typeof o !== "object" || !("niveau" in o)) throw new Error("format");
+      modale({ titre: "Importer « " + f.name + " » ?", html: "<p>L'état actuel sera remplacé.</p>", boutons: [
+        { lib: "Importer", cls: "pri", act: () => { S = normaliser(o); journal("systeme", "Import : " + f.name); sauver(); rendre(); } }, { lib: "Annuler" }] });
+    } catch (err) {
+      modale({ titre: "Import impossible", couleur: "var(--red)", html: "<p>Le fichier n'est pas une sauvegarde DOREX valide.</p>", boutons: [{ lib: "OK" }] });
+    }
+    e.target.value = "";
+  };
+  lr.readAsText(f);
+});
+
+/* ---------- PWA (uniquement servi en http/https) ---------- */
+if (/^https?:$/.test(location.protocol)) {
+  const l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+  const a = document.createElement("link"); a.rel = "apple-touch-icon"; a.href = "icon-192.png"; document.head.appendChild(a);
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
+/* ---------- Démarrage ---------- */
+charger();
+if (!S.journal.length) { journal("systeme", "Terminal DOREX initialisé"); sauver(); }
+rendre();
+rendreRegles();
+try { const t = sessionStorage.getItem("dorex-onglet"); if (t) onglet(t); } catch (e) {}
+/* Accès de débogage (console) */
+window.DOREX = { get etat() { return S; }, requis, analysePassage, basculerEvent, classerZone, ajouterZone, setNiveau, ajouterMarine, normaliser, DOREX_DATA };
+</script>
+</body>
+</html>
