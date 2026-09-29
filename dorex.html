@@ -235,6 +235,8 @@ details.marine > summary { display: flex; align-items: center; gap: 4px 10px; te
 .m-nom { color: var(--sante); font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
 .m-ps { font-size: 13px; color: var(--fg-dim); overflow-wrap: anywhere; min-width: 0; }
 .m-sb { flex: 0 0 auto; color: var(--sante); font-size: 13px; font-weight: 700; }
+.m-alerte { flex: 0 0 auto; align-self: flex-start; color: var(--red); font-size: 18px; line-height: 1; }
+details.marine[open] .m-alerte { display: none; }
 .m-lab { display: block; margin: 12px 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-dim); }
 .m-champs { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
 @media (min-width: 520px) { .m-champs { grid-template-columns: 1fr 1fr; } }
@@ -1790,11 +1792,17 @@ function ecgHTML(sid, mini) {
 function carteMarine(m) {
   const s = SANTE[m.sante], st = STATUTS[m.statut], id = esc(m.id), a = `data-mid="${id}"`;
   const [nom, ps] = nomsResume(m);
+  // Icône d'attention (fiche repliée seulement) : blessures non soignées ou statut DOREX enregistré
+  const nbBl = ESC.corps.reduce((t, p) => t + nbActives(m.blessures[p.id]), 0);
+  const alertes = [];
+  if (nbBl) alertes.push(nbBl + (nbBl > 1 ? " blessures non soignées" : " blessure non soignée"));
+  if (m.statut !== "aucun") alertes.push("Statut DOREX : " + st.lib);
   let h = `<details class="marine s-${m.sante}" data-marine="${id}">
   <summary data-f="sum">
     <span class="m-id"><b class="m-nom">${esc(nom)}</b><span class="m-ps" ${ps ? "" : "hidden"}>${esc(ps)}</span></span>
     <span class="m-sb">${esc(s.lib)}</span>
     ${ecgHTML(m.sante, true)}
+    ${alertes.length ? `<span class="m-alerte" role="img" aria-label="${esc(alertes.join(" ; "))}" title="${esc(alertes.join("\n"))}">⚠</span>` : ""}
   </summary><div class="in">
   <div class="m-champs">
     <div><label class="m-lab" for="mn-${id}">Nom</label><input type="text" id="mn-${id}" data-f="nom" ${a} data-mchamp="nom" value="${esc(m.nom)}" maxlength="60" autocomplete="off"></div>

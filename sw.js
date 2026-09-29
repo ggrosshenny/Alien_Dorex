@@ -1,6 +1,6 @@
 /* Service worker DOREX : met l'application en cache pour un usage hors ligne.
    Changer VERSION après toute modification de dorex.html pour forcer la mise à jour. */
-const VERSION = "dorex-v7";
+const VERSION = "dorex-v9";
 const FICHIERS = ["dorex.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
